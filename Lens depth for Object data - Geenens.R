@@ -1,6 +1,8 @@
 ## Loading data
 library(fda)
 
+## A new comment
+
 data(CanadianWeather)
 x = CanadianWeather
 CanadianWeather$dailyAv[,2,]
