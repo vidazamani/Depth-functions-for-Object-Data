@@ -1,3 +1,4 @@
+
 ## Loading necessary libraries 
 
 library(ICtest)
@@ -13,7 +14,7 @@ library(shapes)
 p <- 5
 
 # A total of n = 100 random covariance matrices
-n <- 100
+n <- 50
 
 # Proportion of outliers
 eps <- 0.05
@@ -34,9 +35,10 @@ many_S_non_outliers <- replicate(n0, {
   D <- diag(exp(rnorm(p)))
   S <- U%*%D%*%t(U)
   
-  diagS <- diag(S)
-  diag(1/sqrt(diagS))%*%S%*%diag(1/sqrt(diagS))
-  
+  # diagS <- diag(S)
+  # diag(1/sqrt(diagS))%*%S%*%diag(1/sqrt(diagS))
+  # 
+  S
 })
 
 
@@ -45,15 +47,16 @@ many_S_outliers <- replicate(n1, {
   U <- rorth(p)
   D <- diag(exp(rnorm(p, mu)))
   S <- U%*%D%*%t(U)
-  
-  diagS <- diag(S)
-  diag(1/sqrt(diagS))%*%S%*%diag(1/sqrt(diagS))
-  
+  # 
+  # diagS <- diag(S)
+  # diag(1/sqrt(diagS))%*%S%*%diag(1/sqrt(diagS))
+  # 
+  S
 })
 
 
 many_S <- abind(many_S_non_outliers, many_S_outliers)
-
+many_S[,,1]
 
 # What is the deepest point of the non-outlying part of the sample on the population level?
 # Because the "typical" value of N(0, 1) is 0, this makes the most typical value of D to be the identity matrix
@@ -193,7 +196,7 @@ Matrix_to_vector = function(CovMatrix){
 }
 
 
-testpoint = many_S[,,56]
+testpoint = many_S[,,50]
 v = Matrix_to_vector(testpoint)
 
 round(test_point_depth(v,D, many_S),3)
