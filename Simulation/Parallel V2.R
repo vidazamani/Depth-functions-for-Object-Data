@@ -35,8 +35,10 @@ gener_cov_data <- function(p,n,eps,mu){
 
 
 
-source("D:/Interview & work/oversees/Finland/Turku University/Codes/All Metric depth functions.R")
+source("D:/All Metric depth functions.R")
 
+## Or
+https://github.com/vidazamani/Depth-functions-for-Object-Data/blob/95d9a29cdb39ec1c33b0acc0951f93b20f8a77be/All%20Metric%20depth%20functions.R#L1
 
 
 
