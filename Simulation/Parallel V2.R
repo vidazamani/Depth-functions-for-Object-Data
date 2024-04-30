@@ -34,18 +34,27 @@ gener_cov_data <- function(p,n,eps,mu){
 }
 
 
+###############################################################################################
+#### Here we should use all metric depth functions which has been defined in seperate file ####
 
+
+#### In R script
 source("D:/All Metric depth functions.R")
 
-## Permlink
+#### OR
+## Permlink for github
 https://github.com/vidazamani/Depth-functions-for-Object-Data/blob/95d9a29cdb39ec1c33b0acc0951f93b20f8a77be/All%20Metric%20depth%20functions.R#L1
 
-## Dynamic link
+#### OR
+## Dynamic link for github
 
 https://github.com/vidazamani/Depth-functions-for-Object-Data/blob/main/All%20Metric%20depth%20functions.R
 
 
 
+
+
+##### Simulation Function
 simulation_with_cov <- function(p,n,eps,mu){
   
   
