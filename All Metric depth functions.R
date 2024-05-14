@@ -174,12 +174,12 @@ MOD3 <- function(D){
                        (D[k,w])^2 )
                      ,3,3)
           
-          B[i,j,k] = det(S)
+          B[i,j,k] = det(S)+ 4*(D[i,w]^2)*(D[j,w]^2)*(D[k,w]^2)
           
         }
       }
     }
-    B[B<0] = 0
+    
     area[w] = sum(sqrt(B))
     ojadepth[w] = 1 / (1 + (1/(0.5*(n-1)*(n^2))*(area[w])))
   }
@@ -188,5 +188,51 @@ MOD3 <- function(D){
   
 }
 
+
+
+
+### OR
+
+# Metric Oja depth in three-dimensional another version 
+
+# MOD3 <- function(D){
+#   
+#   n <- nrow(D)
+#   B = array(0,c(n,n,n))
+#   ojadepth = c()
+#   area = c(0)
+#   
+#   
+#   for (w in 1:n) { #### w here is the point whose depth is of our interest ####
+#     
+#     for (i in 1:(n-1)) {
+#       for (j in i:n) {
+#         for (k in 1:n) {
+#           
+#           S = matrix(c((D[i,w])^2,
+#                        -0.5*((D[j,i])^2 - (D[j,w]^2) - (D[i,w])^2),
+#                        -0.5*((D[k,i])^2 - (D[k,w]^2) - (D[i,w])^2),
+#                        -0.5*((D[i,j])^2 - (D[i,w]^2) - (D[j,w])^2),
+#                        (D[j,w])^2,
+#                        -0.5*((D[k,j])^2 - (D[k,w]^2) - (D[j,w])^2),
+#                        -0.5*((D[i,k])^2 - (D[i,w]^2) - (D[k,w])^2),
+#                        -0.5*((D[j,k])^2 - (D[j,w]^2) - (D[k,w])^2),
+#                        (D[k,w])^2 )
+#                      ,3,3)
+#           
+#           B[i,j,k] = det(S) 
+#         }
+#       }
+#     }
+#     
+#     
+#     B[B<0] = 0
+#     area[w] = sum(sqrt(B))
+#     ojadepth[w] = 1 / (1 + (1/(0.5*(n-1)*(n^2))*(area[w])))
+#   }
+#   
+#   return(ojadepth)
+#   
+# }
 ############################################
 ### This is the end of this code ###
