@@ -1,0 +1,145 @@
+#### Real example with Canadian weather data ####
+
+
+##### All needed source and libraries ########
+library(fda)
+library(fda.usc) ### For computing distance
+library(RColorBrewer)
+
+
+source("D:/Interview & work/oversees/Finland/Turku University/Codes/All Metric depth functions.R")
+
+
+###################################################################################################
+########## In this part we just want to show why this data can be divided to two groups ###########
+# The full temperature data set from the Canadian weather data example
+y <- CanadianWeather$dailyAv[, , 1]
+my_basis <- create.fourier.basis(c(0, 365), 100)
+ft <- Data2fd(1:365, y, my_basis)
+ft_s <- smooth.fd(ft, fdPar(ft, 2, 1e4))
+
+plot(ft_s,xlab = "Time (days)", ylab = "Average temperature")
+
+
+# Each of the weather stations belongs to one of four regions:
+# Atlantic, Continental, Pacific, Arctic
+
+region <- CanadianWeather$region
+
+
+display.brewer.all(colorblindFriendly = TRUE)
+
+my_col <- brewer.pal(4, "Dark2")
+plot(ft_s, col = my_col[factor(region)], lty = 1, xlab = "Time (days)", ylab = "Average temperature")
+legend(1, 20, legend = c("Arctic", "Atlantic", "Continental", "Pacific"), lwd = 1, col = my_col, cex = 0.8)
+
+
+my_col_2 <- my_col
+my_col_2[4] <- my_col[2]
+plot(ft_s, col = my_col_2[factor(region)], lty = 1, xlab = "Time (days)", ylab = "Average temperature")
+legend(1, 20, legend = c("Arctic", "Atlantic or Pacific", "Continental"), lwd = 1, col = my_col_2[c(1, 2, 3)], cex = 0.8)
+
+
+# The mean function correponding to a sample of curves stored in an fd-object can be computed with mean.fd
+ft_mean <- mean.fd(ft_s)
+plot(ft_s, col = 1, lty = 2, xlab = "Time (days)", ylab = "Average temperature")
+plot(ft_mean, add = TRUE, col = 2, lwd = 3, lty = 1)
+
+
+
+#Divide the stations into two groups ("Atlantic and Pacific" vs. "Continental and Arctic") and compute the mean and +-2 SD curves separately for the two groups.
+
+g1 <- region %in% c("Atlantic", "Pacific")
+g2 <- region %in% c("Continental", "Arctic")
+
+
+ftg1 <- ft_s[g1]
+ftg1_mean <- mean.fd(ftg1)
+ftg1_sd <- sd.fd(ftg1)
+
+
+ftg2 <- ft_s[g2]
+ftg2_mean <- mean.fd(ftg2)
+ftg2_sd <- sd.fd(ftg2)
+
+
+
+plot(ftg1_mean, ylim = c(-25, 20), xlab = "Time (days)", ylab = "Mean temperature across stations")
+plot(ftg2_mean, col = 2, add = TRUE)
+legend(1, 20, legend = c("Atlantic and Pacific", "Continental and Arctic"), lwd = 1, col = c(1, 2), cex = 0.8)
+
+
+plot(ftg1_sd, ylim = c(0, 10), xlab = "Time (days)", ylab = "SD of temperature across stations")
+plot(ftg2_sd, col = 2, add = TRUE)
+legend(1, 10, legend = c("Atlantic and Pacific", "Continental and Arctic"), lwd = 1, col = c(1, 2), cex = 0.8)
+
+
+
+
+
+
+#################################################################################################
+######### Data Preparation
+
+ap <- CanadianWeather$dailyAv[,,1][,g1]
+
+ca <- CanadianWeather$dailyAv[,,1][,g2]
+
+
+###### Computing L_2 Distance 
+Dismatrixap = metric.lp(t(ap), lp = 2)
+
+Dismatrixca = metric.lp(t(ca), lp = 2)
+
+
+#Difference in means
+observed <- mean(MOD2(Dismatrixap)) - mean(MOD2(Dismatrixca))
+
+
+
+
+
+distribution=c()
+result=0
+
+k = 10
+
+for (i in 1:k) {
+  
+  fake_labels <- sample(c("ap","ca"), 35, replace = TRUE)
+  new_data <- CanadianWeather$dailyAv[,,1]
+  colnames(new_data) <- fake_labels
+  
+  
+  
+  
+  ap_fake <- new_data[,fake_labels %in% c("ap")]
+  
+  ca_fake <- new_data[,fake_labels %in% c("ca")]
+  
+  
+  ###### Computing L_2 Distance 
+  Dismatrixap = metric.lp(t(ap_fake), lp = 2)
+  
+  Dismatrixca = metric.lp(t(ca_fake), lp = 2)
+  
+  
+  #Difference in means
+  distribution[i] <- mean(MOD2(Dismatrixap)) - mean(MOD2(Dismatrixca))
+  
+  
+}
+
+result=sum(abs(distribution) >= abs(observed))/(k)
+
+
+
+hist(result, breaks=50, col='grey', main="Permutation Distribution", las=1, xlab='')
+abline(v=observed, lwd=3, col="red")
+
+
+
+
+
+
+
