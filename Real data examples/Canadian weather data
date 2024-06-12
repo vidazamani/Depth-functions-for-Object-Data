@@ -77,69 +77,84 @@ legend(1, 10, legend = c("Atlantic and Pacific", "Continental and Arctic"), lwd 
 
 
 
-
 #################################################################################################
 ######### Data Preparation
 
-ap <- CanadianWeather$dailyAv[,,1][,g1]
+# ap <- CanadianWeather$dailyAv[,,1][,g1]
 
-ca <- CanadianWeather$dailyAv[,,1][,g2]
+# ca <- CanadianWeather$dailyAv[,,1][,g2]
 
 
 ###### Computing L_2 Distance 
-Dismatrixap = metric.lp(t(ap), lp = 2)
+# Dismatrixap = metric.lp(t(ap), lp = 2)
 
-Dismatrixca = metric.lp(t(ca), lp = 2)
+
+Dismatrixap2 <- metric.lp(fdata(ftg1), lp = 2)
+
+# Dismatrixca = metric.lp(t(ca), lp = 2)
+
+
+Dismatrixca2 <- metric.lp(fdata(ftg2), lp = 2)
 
 
 #Difference in means
-observed <- mean(MOD2(Dismatrixap)) - mean(MOD2(Dismatrixca))
+# observed <- mean(MOD2(Dismatrixap)) - mean(MOD2(Dismatrixca))
+
+ordap <- order(MOD2(Dismatrixap2),decreasing = TRUE)[1]
+deepestap <- fdata(ftg1)[ordap]
+
+ordca <- order(MOD2(Dismatrixca2),decreasing = TRUE)[1]
+deepestca <- fdata(ftg2)[ordca]
 
 
-
+observed <- metric.lp(deepestap,deepestca, lp = 2)
 
 
 distribution=c()
 result=0
 
-k = 10
+k = 500
+set.seed(2222)
 
 for (i in 1:k) {
   
-  fake_labels <- sample(c("ap","ca"), 35, replace = TRUE)
-  new_data <- CanadianWeather$dailyAv[,,1]
-  colnames(new_data) <- fake_labels
+
+  
+  fake_labels <- sample(c(rep("ap",20),rep("ca",15)), 35, replace = FALSE)
+  # new_data <- CanadianWeather$dailyAv[,,1]
+  # colnames(new_data) <- fake_labels
+  # 
   
   
   
+  ap_fake <- ft_s[fake_labels %in% c("ap")]
   
-  ap_fake <- new_data[,fake_labels %in% c("ap")]
-  
-  ca_fake <- new_data[,fake_labels %in% c("ca")]
+  ca_fake <- ft_s[fake_labels %in% c("ca")]
   
   
   ###### Computing L_2 Distance 
-  Dismatrixap = metric.lp(t(ap_fake), lp = 2)
+  Dismatrixap2 <- metric.lp(fdata(ap_fake), lp = 2)
   
-  Dismatrixca = metric.lp(t(ca_fake), lp = 2)
+  Dismatrixca2 <- metric.lp(fdata(ca_fake), lp = 2)
   
   
   #Difference in means
-  distribution[i] <- mean(MOD2(Dismatrixap)) - mean(MOD2(Dismatrixca))
+
+  ordap <- order(MOD2(Dismatrixap2),decreasing = TRUE)[1]
+  deepestap <- fdata(ap_fake)[ordap]
+  
+  ordca <- order(MOD2(Dismatrixca2),decreasing = TRUE)[1]
+  deepestca <- fdata(ca_fake)[ordca]
+  
+  
+  distribution[i] <- metric.lp(deepestap,deepestca, lp = 2)
   
   
 }
 
-result=sum(abs(distribution) >= abs(observed))/(k)
+pvalue <- sum(abs(distribution) >= abs(c(observed)))/(k)
 
 
 
-hist(result, breaks=50, col='grey', main="Permutation Distribution", las=1, xlab='')
+hist(distribution, breaks=10, col='grey', main="Permutation Distribution", las=1, xlab='')
 abline(v=observed, lwd=3, col="red")
-
-
-
-
-
-
-
