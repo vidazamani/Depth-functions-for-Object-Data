@@ -12,7 +12,7 @@ library(dplyr)
 
 # A helper function
 #
-rsphere <- function(n, p, lambda){
+rsphere <- function(p, n, lambda){
   x <- matrix(rnorm(n*p, lambda, 1), n, p)
   x_norm <- apply(x, 1, function(v) sqrt(sum(v^2)))
   return(sweep(x, 1, x_norm, "/"))
@@ -20,12 +20,12 @@ rsphere <- function(n, p, lambda){
 
 
 
-cont_sample <- function(n, p, eps, lambda_1){
+cont_sample <- function(p, n, eps, lambda_1){
   n1 <- floor((1 - eps)*n)
   n2 <- n - n1
   
-  x1 <- rsphere(n1, p, lambda_1)
-  x2 <- rsphere(n2, p, -1)
+  x1 <- rsphere(p, n1, lambda_1)
+  x2 <- rsphere(p, n2, -1)
   
   rbind(x1, x2)
   
@@ -36,11 +36,11 @@ source("C:/Users/vizama/Documents/1st paper/Box_Parallel/Codes/All Metric depth 
 
 
 
-simulation_with_sph <- function(n, p, eps, lambda_1){
+simulation_with_sph <- function(p, n, eps, lambda_1){
   
   
   # generate data
-  many_S <- cont_sample(n, p, eps, lambda_1)
+  many_S <- cont_sample(p, n, eps, lambda_1)
   
   # Compute the distance matrix between the corr matrices
   
@@ -131,14 +131,15 @@ starttime <- Sys.time()
 # Parameters
 
 n <- c(10,20,30,40,50,60)
-p = c(10, 15, 20)
+p = c(3, 5, 10)
 eps = c(0.05, 0.30)
 lambda_1 = 5
 
 
 
-par_grid <- expand.grid(sample_size = n,
-                        matrix_dimension = p,
+
+par_grid <- expand.grid(matrix_dimension = p,
+                        sample_size = n,
                         outlier_rate = eps, 
                         mean = lambda_1)
 
@@ -146,7 +147,7 @@ par_grid <- expand.grid(sample_size = n,
 par_n <- nrow(par_grid)
 
 
-iter = 10
+iter = 400
 temp <- list()
 output <- matrix(0)
 a <- list()
@@ -217,8 +218,8 @@ duration <- endtime - starttime
 
 
 # New facet label names for matrix dimension variable
-mtd.labs <- c("P = 10", "P = 15", "P = 20")
-names(mtd.labs) <- c(10, 15, 20)
+mtd.labs <- c("P = 3", "P = 5", "P = 10")
+names(mtd.labs) <- c(3, 5, 10)
 
 # New facet label names for outlier rate variable
 otl.labs <- c("outlier rate = 5%", "outlier rate = 30%")
