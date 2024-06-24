@@ -14,7 +14,7 @@ MLD <- function(D){
         
         if (i<j) {
           maximum[i] = max(D[i,p],D[j,p])
-          if (D[i,j]>maximum[i]) {
+          if (D[i,j]>maximum[i]+1e-6) {
             s = s+1
           }
           
