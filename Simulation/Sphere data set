@@ -12,7 +12,7 @@ library(dplyr)
 
 # A helper function
 #
-rsphere <- function(n, p, lambda){
+rsphere <- function(p, n, lambda){
   x <- matrix(rnorm(n*p, lambda, 1), n, p)
   x_norm <- apply(x, 1, function(v) sqrt(sum(v^2)))
   return(sweep(x, 1, x_norm, "/"))
@@ -20,12 +20,12 @@ rsphere <- function(n, p, lambda){
 
 
 
-cont_sample <- function(n, p, eps, lambda_1){
+cont_sample <- function(p, n, eps, lambda_1){
   n1 <- floor((1 - eps)*n)
   n2 <- n - n1
   
-  x1 <- rsphere(n1, p, lambda_1)
-  x2 <- rsphere(n2, p, -1)
+  x1 <- rsphere(p, n1, lambda_1)
+  x2 <- rsphere(p, n2, -1)
   
   rbind(x1, x2)
   
@@ -36,11 +36,11 @@ source("C:/Users/vizama/Documents/1st paper/Box_Parallel/Codes/All Metric depth 
 
 
 
-simulation_with_sph <- function(n, p, eps, lambda_1){
+simulation_with_sph <- function(p, n, eps, lambda_1){
   
   
   # generate data
-  many_S <- cont_sample(n, p, eps, lambda_1)
+  many_S <- cont_sample(p, n, eps, lambda_1)
   
   # Compute the distance matrix between the corr matrices
   
@@ -55,30 +55,30 @@ simulation_with_sph <- function(n, p, eps, lambda_1){
   ############## Running Time of each depth ###################
   
   start_time = Sys.time()
-  MHD(D)
+  DMHD <- MHD(D)
   end_time = Sys.time()
   MHDt <- end_time - start_time
   
   start_time = Sys.time()
-  MSD(D)
+  DMSD <- MSD(D)
   end_time = Sys.time()
   MSDt <- end_time - start_time
   
   
   start_time = Sys.time()
-  MLD(D)
+  DMLD <- MLD(D)
   end_time = Sys.time()
   MLDt <- end_time - start_time
   
   
   start_time = Sys.time()
-  MOD2(D)
+  MOD2D <- MOD2(D)
   end_time = Sys.time()
   MOD2t <- end_time - start_time
   
   
   start_time = Sys.time()
-  MOD3(D)
+  MOD3D <- MOD3(D)
   end_time = Sys.time()
   MOD3t <- end_time - start_time
   
@@ -86,9 +86,9 @@ simulation_with_sph <- function(n, p, eps, lambda_1){
   
   ##### Computing Error #####
   
-  MHDD = order(MHD(D))[n] ; MSDD = order(MSD(D))[n] 
-  MLDD = order(MLD(D))[n] ; MODD2 = order(MOD2(D))[n]
-  MODD3 = order(MOD3(D))[n]
+  MHDD = order(DMHD)[n] ; MSDD = order(DMSD)[n] 
+  MLDD = order(DMLD)[n] ; MODD2 = order(MOD2D)[n]
+  MODD3 = order(MOD3D)[n]
   
   
   tudeepest = many_S[MHDD,]
@@ -126,19 +126,20 @@ simulation_with_sph <- function(n, p, eps, lambda_1){
 
 starttime <- Sys.time()
 
+
+
 # Parameters
 
 n <- c(10,20,30,40,50,60)
-
-p = 10
-
-eps = 0.05
-
-lambda_1 = 5 ## it is similar to mu
+p = c(3, 5, 10)
+eps = c(0.05, 0.30)
+lambda_1 = 5
 
 
-par_grid <- expand.grid(sample_size = n,
-                        matrix_dimension = p,
+
+
+par_grid <- expand.grid(matrix_dimension = p,
+                        sample_size = n,
                         outlier_rate = eps, 
                         mean = lambda_1)
 
@@ -179,8 +180,8 @@ for (j in 1:iter) {
   output <- matrix(unlist(temp), ncol = 5, byrow = TRUE)
   
   a = lapply(1:5, function(i) data.frame(par_grid, 
-                                         errorD = output[seq(1,2*length(n),2),i],
-                                         howlong = output[seq(2,2*length(n),2),i],
+                                         errorD = output[seq(1,2*length(n)*length(p)*length(eps),2),i],
+                                         howlong = output[seq(2,2*length(n)*length(p)*length(eps),2),i],
                                          method = i))
   
   b = list_rbind(a)
@@ -192,9 +193,9 @@ for (j in 1:iter) {
 
 
 
-b_all$method <- factor(b_all$method, 1:5, c("Metric Lens depth",
-                                            "Metric Half-space depth",
+b_all$method <- factor(b_all$method, 1:5, c("Metric Half-space depth",
                                             "Metric Spatial depth",
+                                            "Metric Lens depth",
                                             "Metric Oja depth 2D",
                                             "Metric Oja depth 3D"))
 
@@ -203,457 +204,9 @@ bagg = b_all %>%
   summarise(avg_error = mean(errorD), avg_time = mean(howlong))
 
 
-
 write.table(bagg,
-            file = "C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\data\\p10eps0.05.txt")
+            file = "C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\Singlefiledata\\wholedata")
 
-stopCluster(cl)
-
-
-
-######### Parameters 
-
-p <- 10
-
-# number of random corr matrices
-n <- c(10,20,30,40,50,60)
-
-# n <- c(10,20)
-
-# Proportion of outliers (To check the robustness of our methods)
-eps <- 0.3
-
-# How outlying the outliers are
-lambda_1 = 5 ## it is similar to mu
-
-
-par_grid <- expand.grid(sample_size = n,
-                        matrix_dimension = p,
-                        outlier_rate = eps, 
-                        mean = lambda_1)
-
-
-par_n <- nrow(par_grid)
-
-
-iter = 500
-temp <- list()
-output <- matrix(0)
-a <- list()
-b <- data.frame()
-b_all <- data.frame()
-
-
-
-cl <- makeCluster(4)
-clusterExport(cl, ls(), envir = environment())
-clusterExport(cl, c("rorth","abind", "CovDist"), envir = environment())
-
-
-clusterEvalQ(cl, set.seed(2222))
-set.seed(1111)
-seed_vec <- sample(1:100000, iter)
-
-
-
-
-for (j in 1:iter) {
-  
-  set.seed(seed_vec[j])
-  
-  temp <- parSapply(cl, 1:par_n, function(i) simulation_with_sph(par_grid$matrix_dimension[i],
-                                                                 par_grid$sample_size[i],
-                                                                 par_grid$outlier_rate[i],
-                                                                 par_grid$mean[i]))
-  
-  output <- matrix(unlist(temp), ncol = 5, byrow = TRUE)
-  
-  a = lapply(1:5, function(i) data.frame(par_grid, 
-                                         errorD = output[seq(1,2*length(n),2),i],
-                                         howlong = output[seq(2,2*length(n),2),i],
-                                         method = i))
-  
-  b = list_rbind(a)
-  b_all <- rbind(b_all,b)
-  
-}
-
-
-
-
-
-b_all$method <- factor(b_all$method, 1:5, c("Metric Lens depth",
-                                            "Metric Half-space depth",
-                                            "Metric Spatial depth",
-                                            "Metric Oja depth 2D",
-                                            "Metric Oja depth 3D"))
-
-bagg = b_all %>% 
-  group_by(method,mean,outlier_rate,matrix_dimension,sample_size) %>% 
-  summarise(avg_error = mean(errorD), avg_time = mean(howlong))
-
-
-
-write.table(bagg,
-            file = "C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\data\\p10eps0.3.txt")
-
-stopCluster(cl)
-
-
-######### Parameters 
-
-p <- 15
-
-# number of random corr matrices
-n <- c(10,20,30,40,50,60)
-
-# n <- c(10,20)
-
-# Proportion of outliers (To check the robustness of our methods)
-eps <- 0.05
-
-# How outlying the outliers are
-lambda_1 = 5 ## it is similar to mu
-
-
-par_grid <- expand.grid(sample_size = n,
-                        matrix_dimension = p,
-                        outlier_rate = eps, 
-                        mean = lambda_1)
-
-
-par_n <- nrow(par_grid)
-
-
-iter = 500
-temp <- list()
-output <- matrix(0)
-a <- list()
-b <- data.frame()
-b_all <- data.frame()
-
-
-
-cl <- makeCluster(4)
-clusterExport(cl, ls(), envir = environment())
-clusterExport(cl, c("rorth","abind", "CovDist"), envir = environment())
-
-
-clusterEvalQ(cl, set.seed(2222))
-set.seed(1111)
-seed_vec <- sample(1:100000, iter)
-
-
-
-
-for (j in 1:iter) {
-  
-  set.seed(seed_vec[j])
-  
-  temp <- parSapply(cl, 1:par_n, function(i) simulation_with_sph(par_grid$matrix_dimension[i],
-                                                                 par_grid$sample_size[i],
-                                                                 par_grid$outlier_rate[i],
-                                                                 par_grid$mean[i]))
-  
-  output <- matrix(unlist(temp), ncol = 5, byrow = TRUE)
-  
-  a = lapply(1:5, function(i) data.frame(par_grid, 
-                                         errorD = output[seq(1,2*length(n),2),i],
-                                         howlong = output[seq(2,2*length(n),2),i],
-                                         method = i))
-  
-  b = list_rbind(a)
-  b_all <- rbind(b_all,b)
-  
-}
-
-
-
-
-
-b_all$method <- factor(b_all$method, 1:5, c("Metric Lens depth",
-                                            "Metric Half-space depth",
-                                            "Metric Spatial depth",
-                                            "Metric Oja depth 2D",
-                                            "Metric Oja depth 3D"))
-
-bagg = b_all %>% 
-  group_by(method,mean,outlier_rate,matrix_dimension,sample_size) %>% 
-  summarise(avg_error = mean(errorD), avg_time = mean(howlong))
-
-
-
-write.table(bagg,
-            file = "C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\data\\p15eps0.05.txt")
-
-stopCluster(cl)
-
-
-
-######### Parameters 
-
-p <- 15
-
-# number of random corr matrices
-n <- c(10,20,30,40,50,60)
-
-# n <- c(10,20)
-
-# Proportion of outliers (To check the robustness of our methods)
-eps <- 0.3
-
-# How outlying the outliers are
-lambda_1 = 5 ## it is similar to mu
-
-
-par_grid <- expand.grid(sample_size = n,
-                        matrix_dimension = p,
-                        outlier_rate = eps, 
-                        mean = lambda_1)
-
-
-par_n <- nrow(par_grid)
-
-
-iter = 500
-temp <- list()
-output <- matrix(0)
-a <- list()
-b <- data.frame()
-b_all <- data.frame()
-
-
-
-cl <- makeCluster(4)
-clusterExport(cl, ls(), envir = environment())
-clusterExport(cl, c("rorth","abind", "CovDist"), envir = environment())
-
-
-clusterEvalQ(cl, set.seed(2222))
-set.seed(1111)
-seed_vec <- sample(1:100000, iter)
-
-
-
-
-for (j in 1:iter) {
-  
-  set.seed(seed_vec[j])
-  
-  temp <- parSapply(cl, 1:par_n, function(i) simulation_with_sph(par_grid$matrix_dimension[i],
-                                                                 par_grid$sample_size[i],
-                                                                 par_grid$outlier_rate[i],
-                                                                 par_grid$mean[i]))
-  
-  output <- matrix(unlist(temp), ncol = 5, byrow = TRUE)
-  
-  a = lapply(1:5, function(i) data.frame(par_grid, 
-                                         errorD = output[seq(1,2*length(n),2),i],
-                                         howlong = output[seq(2,2*length(n),2),i],
-                                         method = i))
-  
-  b = list_rbind(a)
-  b_all <- rbind(b_all,b)
-  
-}
-
-
-
-
-
-b_all$method <- factor(b_all$method, 1:5, c("Metric Lens depth",
-                                            "Metric Half-space depth",
-                                            "Metric Spatial depth",
-                                            "Metric Oja depth 2D",
-                                            "Metric Oja depth 3D"))
-
-bagg = b_all %>% 
-  group_by(method,mean,outlier_rate,matrix_dimension,sample_size) %>% 
-  summarise(avg_error = mean(errorD), avg_time = mean(howlong))
-
-
-
-write.table(bagg,
-            file = "C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\data\\p15eps0.3.txt")
-
-stopCluster(cl)
-
-
-######### Parameters 
-
-p <- 20
-
-# number of random corr matrices
-n <- c(10,20,30,40,50,60)
-
-# n <- c(10,20)
-
-# Proportion of outliers (To check the robustness of our methods)
-eps <- 0.05
-
-# How outlying the outliers are
-lambda_1 = 5 ## it is similar to mu
-
-
-par_grid <- expand.grid(sample_size = n,
-                        matrix_dimension = p,
-                        outlier_rate = eps, 
-                        mean = lambda_1)
-
-
-par_n <- nrow(par_grid)
-
-
-iter = 500
-temp <- list()
-output <- matrix(0)
-a <- list()
-b <- data.frame()
-b_all <- data.frame()
-
-
-
-cl <- makeCluster(4)
-clusterExport(cl, ls(), envir = environment())
-clusterExport(cl, c("rorth","abind", "CovDist"), envir = environment())
-
-
-clusterEvalQ(cl, set.seed(2222))
-set.seed(1111)
-seed_vec <- sample(1:100000, iter)
-
-
-
-
-for (j in 1:iter) {
-  
-  set.seed(seed_vec[j])
-  
-  temp <- parSapply(cl, 1:par_n, function(i) simulation_with_sph(par_grid$matrix_dimension[i],
-                                                                 par_grid$sample_size[i],
-                                                                 par_grid$outlier_rate[i],
-                                                                 par_grid$mean[i]))
-  
-  output <- matrix(unlist(temp), ncol = 5, byrow = TRUE)
-  
-  a = lapply(1:5, function(i) data.frame(par_grid, 
-                                         errorD = output[seq(1,2*length(n),2),i],
-                                         howlong = output[seq(2,2*length(n),2),i],
-                                         method = i))
-  
-  b = list_rbind(a)
-  b_all <- rbind(b_all,b)
-  
-}
-
-
-
-
-
-b_all$method <- factor(b_all$method, 1:5, c("Metric Lens depth",
-                                            "Metric Half-space depth",
-                                            "Metric Spatial depth",
-                                            "Metric Oja depth 2D",
-                                            "Metric Oja depth 3D"))
-
-bagg = b_all %>% 
-  group_by(method,mean,outlier_rate,matrix_dimension,sample_size) %>% 
-  summarise(avg_error = mean(errorD), avg_time = mean(howlong))
-
-
-
-write.table(bagg,
-            file = "C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\data\\p20eps0.05.txt")
-
-stopCluster(cl)
-
-
-
-######### Parameters 
-
-p <- 20
-
-# number of random corr matrices
-n <- c(10,20,30,40,50,60)
-
-# n <- c(10,20)
-
-# Proportion of outliers (To check the robustness of our methods)
-eps <- 0.3
-
-# How outlying the outliers are
-lambda_1 = 5 ## it is similar to mu
-
-
-par_grid <- expand.grid(sample_size = n,
-                        matrix_dimension = p,
-                        outlier_rate = eps, 
-                        mean = lambda_1)
-
-
-par_n <- nrow(par_grid)
-
-
-iter = 500
-temp <- list()
-output <- matrix(0)
-a <- list()
-b <- data.frame()
-b_all <- data.frame()
-
-
-
-cl <- makeCluster(4)
-clusterExport(cl, ls(), envir = environment())
-clusterExport(cl, c("rorth","abind", "CovDist"), envir = environment())
-
-
-clusterEvalQ(cl, set.seed(2222))
-set.seed(1111)
-seed_vec <- sample(1:100000, iter)
-
-
-
-
-for (j in 1:iter) {
-  
-  set.seed(seed_vec[j])
-  
-  temp <- parSapply(cl, 1:par_n, function(i) simulation_with_sph(par_grid$matrix_dimension[i],
-                                                                 par_grid$sample_size[i],
-                                                                 par_grid$outlier_rate[i],
-                                                                 par_grid$mean[i]))
-  
-  output <- matrix(unlist(temp), ncol = 5, byrow = TRUE)
-  
-  a = lapply(1:5, function(i) data.frame(par_grid, 
-                                         errorD = output[seq(1,2*length(n),2),i],
-                                         howlong = output[seq(2,2*length(n),2),i],
-                                         method = i))
-  
-  b = list_rbind(a)
-  b_all <- rbind(b_all,b)
-  
-}
-
-
-
-
-
-b_all$method <- factor(b_all$method, 1:5, c("Metric Lens depth",
-                                            "Metric Half-space depth",
-                                            "Metric Spatial depth",
-                                            "Metric Oja depth 2D",
-                                            "Metric Oja depth 3D"))
-
-bagg = b_all %>% 
-  group_by(method,mean,outlier_rate,matrix_dimension,sample_size) %>% 
-  summarise(avg_error = mean(errorD), avg_time = mean(howlong))
-
-
-
-write.table(bagg,
-            file = "C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\data\\p20eps0.3.txt")
 
 stopCluster(cl)
 
@@ -664,54 +217,34 @@ endtime <- Sys.time()
 duration <- endtime - starttime
 
 
-
-
-############# Visualization ###############
-
-p10eps0.3 <- read.csv("C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/data/p10eps0.3.txt", sep="")
-p10eps0.05 <- read.csv("C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/data/p10eps0.05.txt", sep="")
-p15eps0.3 <- read.csv("C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/data/p15eps0.3.txt", sep="")
-p15eps0.05 <- read.csv("C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/data/p15eps0.05.txt", sep="")
-p20eps0.3 <- read.csv("C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/data/p20eps0.3.txt", sep="")
-p20eps0.05 <- read.csv("C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/data/p20eps0.05.txt", sep="")
-
-
-Data <- bind_rows(p10eps0.3,
-                  p10eps0.05,
-                  p15eps0.3,
-                  p15eps0.05,
-                  p20eps0.3,
-                  p20eps0.05)
-
 # New facet label names for matrix dimension variable
-mtd.labs <- c("P = 10", "P = 15", "P = 20")
-names(mtd.labs) <- c(10, 15, 20)
+mtd.labs <- c("p = 3", "p = 5", "p = 10")
+names(mtd.labs) <- c(3, 5, 10)
 
 # New facet label names for outlier rate variable
-otl.labs <- c("outlier rate = 5%", "outlier rate = 30%")
+otl.labs <- c("Outlier rate = 5%", "Outlier rate = 30%")
 names(otl.labs) <- c("0.05", "0.3")
 
 
 
 
-plot = ggplot(Data,aes(x = sample_size, y = avg_error, col = method))+ 
+plot = ggplot(bagg,aes(x = sample_size, y = avg_error, col = method))+ 
   facet_grid(matrix_dimension~outlier_rate,
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
   geom_line(linewidth = 0.7)+
   scale_x_continuous(name="sample size")+
-  scale_y_continuous(name = 'bias')+
   theme_bw()+ 
   labs(title = "Performance of each Metric Depth Function", 
        subtitle = "when points on surface (P) and outlier rate increase")+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9))+
-  scale_y_log10()
+  scale_y_log10(name = 'Estimation error')
 
 
 
 
-plot2 = ggplot(Data,aes(x = sample_size, y = avg_time, col = method))+ 
+plot2 = ggplot(bagg,aes(x = sample_size, y = avg_time, col = method))+ 
   facet_grid(matrix_dimension~outlier_rate,
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
@@ -722,48 +255,6 @@ plot2 = ggplot(Data,aes(x = sample_size, y = avg_time, col = method))+
        subtitle = "when points on surface (P) and outlier rate increase")+
   theme(plot.title = element_text(size = 5))+
   theme_bw()
-
-
-plot3 = ggplot(Data,aes(x = sample_size, y = avg_error, col = method,linetype = factor(outlier_rate)))+ 
-  facet_grid(matrix_dimension~.)+
-  geom_line(linewidth = 0.7)+
-  scale_x_continuous(name="sample size")+
-  theme_bw()+ 
-  labs(title = "Performance of each Metric Depth Function", 
-       subtitle = "when matrix dimnesion is 3 and 5% of Distribution is contaminated",
-       y = 'Bias in log scale')+ 
-  theme(plot.title = element_text(size = 12), 
-        plot.subtitle = element_text(size = 9))+
-  scale_y_log10()
-
-
-###### Uni Plot
-plotuni = ggplot(p3eps0.3,aes(x = sample_size, y = avg_error, col = method))+ 
-  geom_line(linewidth = 0.7)+
-  scale_x_continuous(name="sample size")+
-  scale_y_continuous(name = 'Average Error')+
-  theme_bw()+ 
-  labs(title = "Performance of each Metric Depth Function", 
-       subtitle = "when matrix dimnesion is 3 and 5% of Distribution is contaminated")+ 
-  theme(plot.title = element_text(size = 12), 
-        plot.subtitle = element_text(size = 9))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
