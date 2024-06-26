@@ -204,8 +204,8 @@ bagg = b_all %>%
   summarise(avg_error = mean(errorD), avg_time = mean(howlong))
 
 
-write.table(bagg,
-            file = "C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\Singlefiledata\\wholedata")
+
+dput(bagg, file = "C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\Singlefiledata\\sph_data.txt")
 
 
 stopCluster(cl)
@@ -217,6 +217,13 @@ endtime <- Sys.time()
 duration <- endtime - starttime
 
 
+
+###### Visualization
+
+
+sph_data <- dget("C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\Singlefiledata\\sph_data.txt")
+
+
 # New facet label names for matrix dimension variable
 mtd.labs <- c("p = 3", "p = 5", "p = 10")
 names(mtd.labs) <- c(3, 5, 10)
@@ -226,25 +233,24 @@ otl.labs <- c("Outlier rate = 5%", "Outlier rate = 30%")
 names(otl.labs) <- c("0.05", "0.3")
 
 
-
-
-plot = ggplot(bagg,aes(x = sample_size, y = avg_error, col = method))+ 
-  facet_grid(matrix_dimension~outlier_rate,
-             labeller = labeller(matrix_dimension = mtd.labs,
+plot = ggplot(sph_data,
+              aes(x = sample_size, y = avg_error, col = method))+ 
+              facet_grid(matrix_dimension~outlier_rate,
+              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
-  geom_line(linewidth = 0.7)+
-  scale_x_continuous(name="sample size")+
-  theme_bw()+ 
-  labs(title = "Performance of each Metric Depth Function", 
-       subtitle = "when points on surface (P) and outlier rate increase")+ 
-  theme(plot.title = element_text(size = 12), 
-        plot.subtitle = element_text(size = 9))+
-  scale_y_log10(name = 'Estimation error')
+              geom_line(linewidth = 0.7)+
+              scale_x_continuous(name="sample size")+
+              theme_bw()+ 
+              labs(title = "Performance of each Metric Depth Function", 
+                   subtitle = "when points on surface (P) and outlier rate increase")+ 
+              theme(plot.title = element_text(size = 12), 
+                    plot.subtitle = element_text(size = 9))+
+              scale_y_log10(name = 'Estimation error')
 
 
 
 
-plot2 = ggplot(bagg,aes(x = sample_size, y = avg_time, col = method))+ 
+plot2 = ggplot(sph_data,aes(x = sample_size, y = avg_time, col = method))+ 
   facet_grid(matrix_dimension~outlier_rate,
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
