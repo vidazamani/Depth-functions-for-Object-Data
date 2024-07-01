@@ -18,7 +18,8 @@ my_basis <- create.fourier.basis(c(0, 365), 100)
 ft <- Data2fd(1:365, y, my_basis)
 ft_s <- smooth.fd(ft, fdPar(ft, 2, 1e4))
 
-plot(ft_s,xlab = "Time (days)", ylab = "Average temperature")
+plot(ft_s,xlab = "Time (days)", ylab = "Average temperature",
+     main = "Canadian Weather Data")
 
 
 # Each of the weather stations belongs to one of four regions:
@@ -40,7 +41,7 @@ plot(ft_s, col = my_col_2[factor(region)], lty = 1, xlab = "Time (days)", ylab =
 legend(1, 20, legend = c("Arctic", "Atlantic or Pacific", "Continental"), lwd = 1, col = my_col_2[c(1, 2, 3)], cex = 0.8)
 
 
-# The mean function correponding to a sample of curves stored in an fd-object can be computed with mean.fd
+# The mean function corresponding to a sample of curves stored in an fd-object can be computed with mean.fd
 ft_mean <- mean.fd(ft_s)
 plot(ft_s, col = 1, lty = 2, xlab = "Time (days)", ylab = "Average temperature")
 plot(ft_mean, add = TRUE, col = 2, lwd = 3, lty = 1)
@@ -85,15 +86,13 @@ legend(1, 10, legend = c("Atlantic and Pacific", "Continental and Arctic"), lwd 
 # ca <- CanadianWeather$dailyAv[,,1][,g2]
 
 
-###### Computing L_2 Distance 
+###### Computing L_2 Distance which is needed to be used in depth functions to find the deepest object
 # Dismatrixap = metric.lp(t(ap), lp = 2)
-
-
 Dismatrixap2 <- metric.lp(fdata(ftg1), lp = 2)
 
+
+
 # Dismatrixca = metric.lp(t(ca), lp = 2)
-
-
 Dismatrixca2 <- metric.lp(fdata(ftg2), lp = 2)
 
 
@@ -107,25 +106,60 @@ ordca <- order(MOD2(Dismatrixca2),decreasing = TRUE)[1]
 deepestca <- fdata(ftg2)[ordca]
 
 
+
+
+
+
+# clean up
+par(mar = c(5.1,4.1,5,5))
+
+
+
+
+matplot(day.5, CanadianWeather$dailyAv[, , "Temperature.C"],
+        type="l", axes=FALSE, xlab="", ylab="Mean Temperature (deg C)",col = "black")
+axis(2, las=1)
+
+highlight_lines <- c(ordap, ordca)
+
+colors <- c("blue", "red") # Colors for highlighted lines
+line_types <- c(2, 4)      # Line types for highlighted lines (dashed and dotted)
+line_widths <- c(2, 3)     # Line widths for highlighted lines
+
+# Use matlines to add the highlighted lines
+matlines(day.5, CanadianWeather$dailyAv[, , "Temperature.C"][, highlight_lines], 
+         col = colors,
+         lty = line_types,
+         lwd = line_widths)
+
+
+# Label the horizontal axis with the month names
+axis(1, monthBegin.5, labels=FALSE)
+axis(1, monthEnd.5, labels=FALSE)
+axis(1, monthMid, monthLetters, tick=FALSE)
+
+# Add the names of the weather stations
+p  = c(colnames(CanadianWeather$dailyAv[, , "Temperature.C"][, highlight_lines]))
+mtext(p, side=4,
+      at=CanadianWeather$dailyAv[365, p, "Temperature.C"],
+      las=1)
+
+
+
 observed <- metric.lp(deepestap,deepestca, lp = 2)
 
 
 distribution=c()
 result=0
 
-k = 500
+k = 10000
 set.seed(2222)
 
 for (i in 1:k) {
   
-
-  
   fake_labels <- sample(c(rep("ap",20),rep("ca",15)), 35, replace = FALSE)
   # new_data <- CanadianWeather$dailyAv[,,1]
   # colnames(new_data) <- fake_labels
-  # 
-  
-  
   
   ap_fake <- ft_s[fake_labels %in% c("ap")]
   
@@ -139,7 +173,7 @@ for (i in 1:k) {
   
   
   #Difference in means
-
+  
   ordap <- order(MOD2(Dismatrixap2),decreasing = TRUE)[1]
   deepestap <- fdata(ap_fake)[ordap]
   
