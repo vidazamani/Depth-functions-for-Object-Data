@@ -7,7 +7,7 @@ library(fda.usc) ### For computing distance
 library(RColorBrewer)
 
 
-source("D:/Interview & work/oversees/Finland/Turku University/Codes/All Metric depth functions.R")
+source("C:/1stPaper/Codes/All Metric depth functions.R")
 
 
 ###################################################################################################
@@ -37,8 +37,13 @@ legend(1, 20, legend = c("Arctic", "Atlantic", "Continental", "Pacific"), lwd = 
 
 my_col_2 <- my_col
 my_col_2[4] <- my_col[2]
+my_col_2[1] <- my_col[3]
+
 plot(ft_s, col = my_col_2[factor(region)], lty = 1, xlab = "Time (days)", ylab = "Average temperature")
-legend(1, 20, legend = c("Arctic", "Atlantic or Pacific", "Continental"), lwd = 1, col = my_col_2[c(1, 2, 3)], cex = 0.8)
+legend(1, 20, legend = c("Arctic or Continental", "Atlantic or Pacific"), 
+       lwd = 1,
+       col = my_col_2[c(1, 2, 3)],
+       cex = 0.8)
 
 
 # The mean function corresponding to a sample of curves stored in an fd-object can be computed with mean.fd
@@ -99,13 +104,11 @@ Dismatrixca2 <- metric.lp(fdata(ftg2), lp = 2)
 #Difference in means
 # observed <- mean(MOD2(Dismatrixap)) - mean(MOD2(Dismatrixca))
 
-ordap <- order(MOD2(Dismatrixap2),decreasing = TRUE)[1]
+ordap <- order(MOD3(Dismatrixap2),decreasing = TRUE)[1]
 deepestap <- fdata(ftg1)[ordap]
 
-ordca <- order(MOD2(Dismatrixca2),decreasing = TRUE)[1]
+ordca <- order(MOD3(Dismatrixca2),decreasing = TRUE)[1]
 deepestca <- fdata(ftg2)[ordca]
-
-
 
 
 
@@ -114,29 +117,42 @@ deepestca <- fdata(ftg2)[ordca]
 par(mar = c(5.1,4.1,5,5))
 
 
+### Smoothed Data
+
+plot(ft_s, col = my_col[factor(g1)], lty = 1, xlab = "Time (days)", ylab = "Average temperature")
+
+plot(ft_s[(1:35)[g1][ordap]], add = TRUE,
+     col = "black", lty = 1,lwd = 3,
+     xlab = "Time (days)", ylab = "Average temperature")
+plot(ft_s[(1:35)[g2][ordca]], col = "Blue", lwd = 3,add = TRUE,
+     lty = 1, xlab = "Time (days)", ylab = "Average temperature")
 
 
-matplot(day.5, CanadianWeather$dailyAv[, , "Temperature.C"],
-        type="l", axes=FALSE, xlab="", ylab="Mean Temperature (deg C)",col = "black")
-axis(2, las=1)
 
-highlight_lines <- c(ordap, ordca)
+#### Raw Data
 
-colors <- c("blue", "red") # Colors for highlighted lines
-line_types <- c(2, 4)      # Line types for highlighted lines (dashed and dotted)
-line_widths <- c(2, 3)     # Line widths for highlighted lines
+# matplot(day.5, CanadianWeather$dailyAv[, , "Temperature.C"],
+#         type="l", axes=FALSE, xlab="", ylab="Mean Temperature (deg C)",
+#         col = my_col[factor(g1)])
+# axis(2, las=1)
+
+highlight_lines <- c((1:35)[g1][ordap], (1:35)[g2][ordca])
+# 
+# colors <- c("blue", "green") # Colors for highlighted lines
+# line_types <- c(2, 4)      # Line types for highlighted lines (dashed and dotted)
+# line_widths <- c(2, 3)     # Line widths for highlighted lines
 
 # Use matlines to add the highlighted lines
-matlines(day.5, CanadianWeather$dailyAv[, , "Temperature.C"][, highlight_lines], 
-         col = colors,
-         lty = line_types,
-         lwd = line_widths)
+# matlines(day.5, CanadianWeather$dailyAv[, , "Temperature.C"][, highlight_lines], 
+#          col = colors,
+#          lty = line_types,
+#          lwd = line_widths)
 
 
 # Label the horizontal axis with the month names
-axis(1, monthBegin.5, labels=FALSE)
-axis(1, monthEnd.5, labels=FALSE)
-axis(1, monthMid, monthLetters, tick=FALSE)
+# axis(1, monthBegin.5, labels=FALSE)
+# axis(1, monthEnd.5, labels=FALSE)
+# axis(1, monthMid, monthLetters, tick=FALSE)
 
 # Add the names of the weather stations
 p  = c(colnames(CanadianWeather$dailyAv[, , "Temperature.C"][, highlight_lines]))
@@ -152,7 +168,7 @@ observed <- metric.lp(deepestap,deepestca, lp = 2)
 distribution=c()
 result=0
 
-k = 10000
+k = 5000
 set.seed(2222)
 
 for (i in 1:k) {
