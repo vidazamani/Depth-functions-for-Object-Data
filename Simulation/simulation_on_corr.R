@@ -246,7 +246,8 @@ corr_sim_data <- dget("C:\\Users\\vizama\\Documents\\1st paper\\Box_Parallel\\da
 
 ### 2 * 3 panel
 
-pdf(file = "C:/1stPaper/Codes/Results_first_simulation/Pics/Avg_Error/blind.pdf",  
+pdf(file = 
+    "C:/Users/vizama/Documents/1st paper/Box_Parallel/pic/Avg_Error/original.pdf",  
     width = 10, # The width of the plot in inches
     height = 4) # The height of the plot in inches
 
@@ -261,7 +262,7 @@ names(otl.labs) <- c("0.05", "0.3")
 
 
 
-plot = ggplot(bagg,aes(x = sample_size, y = avg_error, col = method))+ 
+plot = ggplot(corr_sim_data,aes(x = sample_size, y = avg_error, col = method))+ 
   facet_grid(outlier_rate~matrix_dimension,
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
@@ -356,21 +357,53 @@ dev.off()
 
 ##### Running time plot
 
+### 2 * 3 panel
 
-plot2 = ggplot(bagg,aes(x = sample_size, y = avg_time, col = method))+ 
-  facet_grid(matrix_dimension~outlier_rate)+
+pdf(file = 
+      "C:/Users/vizama/Documents/1st paper/Box_Parallel/pic/Avg_Time/accent T.pdf",  
+    width = 10, # The width of the plot in inches
+    height = 4) # The height of the plot in inches
+
+
+# New facet label names for matrix dimension variable
+mtd.labs <- c("p = 3", "p = 5", "p = 10")
+names(mtd.labs) <- c(3, 5, 10)
+
+# New facet label names for outlier rate variable
+otl.labs <- c("Outlier rate = 5%", "Outlier rate = 30%")
+names(otl.labs) <- c("0.05", "0.3")
+
+
+plot2 = ggplot(corr_sim_data,aes(x = sample_size, y = avg_time, col = method))+ 
+  facet_grid(outlier_rate~matrix_dimension,
+             labeller = labeller(matrix_dimension = mtd.labs,
+                                 outlier_rate = otl.labs))+
   geom_line(linewidth = 0.7)+
   scale_y_log10(name = 'log of running time')+
   scale_x_continuous(name="sample size")+
-  labs(title = 'Running time of each Metric Depth Function',
-       subtitle = "when matrix dimnesion is 3 and 5% of Distribution is contaminated")+
-  theme(plot.title = element_text(size = 5))+
-  theme_bw()
+  theme_bw()+ 
+  theme(plot.title = element_text(size = 12), 
+        plot.subtitle = element_text(size = 9),
+        legend.position="bottom",
+        legend.title = element_blank())
 
+
+plot2+scale_color_brewer(palette = 'Accent', name = 'Method')
+
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+plot+scale_color_manual(values = cbp1)
+
+plot+scale_color_brewer(palette = 'Paired')
+
+plot+scale_color_brewer(palette = 'Set1')
+
+dev.off()
 
 #####
 
-plot3 = ggplot(bagg,aes(x = sample_size, y = avg_error, col = method,linetype = factor(outlier_rate)))+ 
+plot3 = ggplot(corr_sim_data,aes(x = sample_size, y = avg_error, col = method,linetype = factor(outlier_rate)))+ 
   facet_grid(matrix_dimension~.)+
   geom_line(linewidth = 0.7)+
   scale_x_continuous(name="sample size")+
@@ -395,6 +428,16 @@ plotuni = ggplot(p3eps0.3,aes(x = sample_size, y = avg_error, col = method))+
        subtitle = "when matrix dimnesion is 3 and 5% of Distribution is contaminated")+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9))
+
+
+
+
+
+
+
+
+
+
 
 
 
