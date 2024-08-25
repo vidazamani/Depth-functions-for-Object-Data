@@ -432,14 +432,3 @@ plotuni = ggplot(p3eps0.3,aes(x = sample_size, y = avg_error, col = method))+
 
 
 
-
-
-
-
-
-
-
-
-
-
-
