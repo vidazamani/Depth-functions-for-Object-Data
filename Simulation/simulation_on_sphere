@@ -224,6 +224,12 @@ duration <- endtime - starttime
 sph_data <- dget("C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\Singlefiledata\\sph_data.txt")
 
 
+pdf(file = 
+      "C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/pic/Avg_Error/original.pdf",  
+    width = 10, # The width of the plot in inches
+    height = 4) # The height of the plot in inches
+
+
 # New facet label names for matrix dimension variable
 mtd.labs <- c("p = 3", "p = 5", "p = 10")
 names(mtd.labs) <- c(3, 5, 10)
@@ -233,36 +239,81 @@ otl.labs <- c("Outlier rate = 5%", "Outlier rate = 30%")
 names(otl.labs) <- c("0.05", "0.3")
 
 
-plot = ggplot(sph_data,
-              aes(x = sample_size, y = avg_error, col = method))+ 
-              facet_grid(matrix_dimension~outlier_rate,
-              labeller = labeller(matrix_dimension = mtd.labs,
+
+plot = ggplot(sph_data,aes(x = sample_size, y = avg_error, col = method))+ 
+  facet_grid(outlier_rate~matrix_dimension,
+             labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
-              geom_line(linewidth = 0.7)+
-              scale_x_continuous(name="sample size")+
-              theme_bw()+ 
-              labs(title = "Performance of each Metric Depth Function", 
-                   subtitle = "when points on surface (P) and outlier rate increase")+ 
-              theme(plot.title = element_text(size = 12), 
-                    plot.subtitle = element_text(size = 9))+
-              scale_y_log10(name = 'Estimation error')
+  geom_line(linewidth = 0.7)+
+  scale_x_continuous(name="Sample size")+
+  scale_y_log10(name = 'Estimation error')+
+  theme_bw()+ 
+  theme(plot.title = element_text(size = 12), 
+        plot.subtitle = element_text(size = 9),
+        legend.position="bottom",
+        legend.title = element_blank())
 
 
+
+
+
+plot+scale_color_brewer(palette = 'Accent', name = 'Method')
+
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+plot+scale_color_manual(values = cbp1)
+
+plot+scale_color_brewer(palette = 'Paired')
+
+plot+scale_color_brewer(palette = 'Set1')
+
+dev.off()
+
+
+######## Running time plot 
+
+
+pdf(file = 
+      "C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/pic/Avg_Time/original.pdf",  
+    width = 10, # The width of the plot in inches
+    height = 4) # The height of the plot in inches
+
+
+# New facet label names for matrix dimension variable
+mtd.labs <- c("p = 3", "p = 5", "p = 10")
+names(mtd.labs) <- c(3, 5, 10)
+
+# New facet label names for outlier rate variable
+otl.labs <- c("Outlier rate = 5%", "Outlier rate = 30%")
+names(otl.labs) <- c("0.05", "0.3")
 
 
 plot2 = ggplot(sph_data,aes(x = sample_size, y = avg_time, col = method))+ 
-  facet_grid(matrix_dimension~outlier_rate,
+  facet_grid(outlier_rate~matrix_dimension,
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
   geom_line(linewidth = 0.7)+
   scale_y_log10(name = 'log of running time')+
   scale_x_continuous(name="sample size")+
-  labs(title = 'Running time of each Metric Depth Function',
-       subtitle = "when points on surface (P) and outlier rate increase")+
-  theme(plot.title = element_text(size = 5))+
-  theme_bw()
+  theme_bw()+ 
+  theme(plot.title = element_text(size = 12), 
+        plot.subtitle = element_text(size = 9),
+        legend.position="bottom",
+        legend.title = element_blank())
 
 
+plot2+scale_color_brewer(palette = 'Accent', name = 'Method')
 
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+plot+scale_color_manual(values = cbp1)
+
+plot+scale_color_brewer(palette = 'Paired')
+
+plot+scale_color_brewer(palette = 'Set1')
+
+dev.off()
 
 
