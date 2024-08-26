@@ -225,7 +225,7 @@ sph_data <- dget("C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on
 
 
 pdf(file = 
-      "C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/pic/Avg_Error/original.pdf",  
+      "C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/pic/Avg_Error/accsent sph.pdf",  
     width = 10, # The width of the plot in inches
     height = 4) # The height of the plot in inches
 
@@ -275,7 +275,7 @@ dev.off()
 
 
 pdf(file = 
-      "C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/pic/Avg_Time/original.pdf",  
+      "C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/pic/Avg_Time/original T sph.pdf",  
     width = 10, # The width of the plot in inches
     height = 4) # The height of the plot in inches
 
@@ -294,8 +294,8 @@ plot2 = ggplot(sph_data,aes(x = sample_size, y = avg_time, col = method))+
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
   geom_line(linewidth = 0.7)+
-  scale_y_log10(name = 'log of running time')+
-  scale_x_continuous(name="sample size")+
+  scale_y_log10(name = 'Running time in seconds')+
+  scale_x_continuous(name="Sample size")+
   theme_bw()+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9),
@@ -315,5 +315,4 @@ plot+scale_color_brewer(palette = 'Paired')
 plot+scale_color_brewer(palette = 'Set1')
 
 dev.off()
-
 
