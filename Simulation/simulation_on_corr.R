@@ -379,8 +379,8 @@ plot2 = ggplot(corr_sim_data,aes(x = sample_size, y = avg_time, col = method))+
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
   geom_line(linewidth = 0.7)+
-  scale_y_log10(name = 'log of running time')+
-  scale_x_continuous(name="sample size")+
+  scale_y_log10(name = 'Running time in seconds')+
+  scale_x_continuous(name="Sample size")+
   theme_bw()+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9),
@@ -428,7 +428,5 @@ plotuni = ggplot(p3eps0.3,aes(x = sample_size, y = avg_error, col = method))+
        subtitle = "when matrix dimnesion is 3 and 5% of Distribution is contaminated")+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9))
-
-
 
 
