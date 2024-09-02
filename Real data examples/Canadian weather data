@@ -7,7 +7,7 @@ library(fda.usc) ### For computing distance
 library(RColorBrewer)
 
 
-source("C:/1stPaper/Codes/All Metric depth functions.R")
+source("C:/Users/vizama/Documents/1st paper/Box_Parallel/Codes/All Metric depth functions.R")
 
 
 ###################################################################################################
@@ -27,8 +27,6 @@ plot(ft_s,xlab = "Time (days)", ylab = "Average temperature",
 
 region <- CanadianWeather$region
 
-
-display.brewer.all(colorblindFriendly = TRUE)
 
 my_col <- brewer.pal(4, "Dark2")
 plot(ft_s, col = my_col[factor(region)], lty = 1, xlab = "Time (days)", ylab = "Average temperature")
@@ -96,13 +94,11 @@ legend(1, 10, legend = c("Atlantic and Pacific", "Continental and Arctic"), lwd 
 Dismatrixap2 <- metric.lp(fdata(ftg1), lp = 2)
 
 
-
 # Dismatrixca = metric.lp(t(ca), lp = 2)
 Dismatrixca2 <- metric.lp(fdata(ftg2), lp = 2)
 
 
-#Difference in means
-# observed <- mean(MOD2(Dismatrixap)) - mean(MOD2(Dismatrixca))
+#Difference in means for real observed data
 
 ordap <- order(MOD3(Dismatrixap2),decreasing = TRUE)[1]
 deepestap <- fdata(ftg1)[ordap]
@@ -160,49 +156,119 @@ mtext(p, side=4,
       at=CanadianWeather$dailyAv[365, p, "Temperature.C"],
       las=1)
 
-
-
-observed <- metric.lp(deepestap,deepestca, lp = 2)
-
-
-distribution=c()
-result=0
-
-k = 5000
-set.seed(2222)
-
-for (i in 1:k) {
-  
-  fake_labels <- sample(c(rep("ap",20),rep("ca",15)), 35, replace = FALSE)
-  # new_data <- CanadianWeather$dailyAv[,,1]
-  # colnames(new_data) <- fake_labels
-  
-  ap_fake <- ft_s[fake_labels %in% c("ap")]
-  
-  ca_fake <- ft_s[fake_labels %in% c("ca")]
-  
-  
-  ###### Computing L_2 Distance 
-  Dismatrixap2 <- metric.lp(fdata(ap_fake), lp = 2)
-  
-  Dismatrixca2 <- metric.lp(fdata(ca_fake), lp = 2)
-  
-  
-  #Difference in means
-  
-  ordap <- order(MOD2(Dismatrixap2),decreasing = TRUE)[1]
-  deepestap <- fdata(ap_fake)[ordap]
-  
-  ordca <- order(MOD2(Dismatrixca2),decreasing = TRUE)[1]
-  deepestca <- fdata(ca_fake)[ordca]
-  
-  
-  distribution[i] <- metric.lp(deepestap,deepestca, lp = 2)
-  
+msddd = c()
+for (j in 1:10) {
+  msddd[j] = pvalue_canada_weather(1,1000,MSD)
   
 }
 
-pvalue <- sum(abs(distribution) >= abs(c(observed)))/(k)
+pvalue_canada_weather <- function(lp_value, iter, depth_fun) {
+  
+  distribution=c()
+  
+  for (i in 1:iter) {
+    
+    fake_labels <- sample(c(rep("ap",20),rep("ca",15)), 35, replace = FALSE)
+    # new_data <- CanadianWeather$dailyAv[,,1]
+    # colnames(new_data) <- fake_labels
+    
+    ap_fake <- ft_s[fake_labels %in% c("ap")]
+    
+    ca_fake <- ft_s[fake_labels %in% c("ca")]
+    
+    
+    ###### Computing L_2 Distance 
+    Dismatrixap2 <- metric.lp(fdata(ap_fake), lp = lp_value)
+    
+    Dismatrixca2 <- metric.lp(fdata(ca_fake), lp = lp_value)
+    
+    
+    #Difference in means
+    
+    ordap <- order(depth_fun(Dismatrixap2),decreasing = TRUE)[1]
+    deepestap <- fdata(ap_fake)[ordap]
+    
+    ordca <- order(depth_fun(Dismatrixca2),decreasing = TRUE)[1]
+    deepestca <- fdata(ca_fake)[ordca]
+    
+    
+    distribution[i] <- metric.lp(deepestap,deepestca, lp = lp_value)
+    
+    
+  }
+  
+  #Difference in means for real observed data
+  
+  ordap <- order(depth_fun(Dismatrixap2),decreasing = TRUE)[1]
+  deepestap <- fdata(ftg1)[ordap]
+  
+  ordca <- order(depth_fun(Dismatrixca2),decreasing = TRUE)[1]
+  deepestca <- fdata(ftg2)[ordca]
+  
+  observed <- metric.lp(deepestap,deepestca, lp = lp_value)
+  
+  
+  pvalue <- sum(abs(distribution) >= abs(c(observed)))/(iter)
+  
+  return(pvalue)
+  
+}
+
+start_time <- Sys.time()
+set.seed(2222)
+
+
+##### Parameters 
+
+iter = 5000
+lp_values <- c(1, 2, 3, 4, 5, 10, 20, 50)
+model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
+models <- list(MOD3, MOD2, MHD, MLD, MSD)
+
+
+combinations <- expand.grid(ModelName = model_names,
+                            lpvalue = lp_values,
+                            stringsAsFactors = FALSE)
+
+
+# Apply the function for each combination and store the results in a data frame
+results_df <- do.call(rbind, lapply(1:nrow(combinations), function(i) {
+  model <- models[[which(model_names == combinations$ModelName[i])]]
+  lp_val <- combinations$lpvalue[i]
+  data.frame(Model = combinations$ModelName[i], lpvalue = lp_val, PValue = pvalue_canada_weather(lp_val, iter, model))
+}))
+
+# Print the final results
+print(results_df)
+
+
+end_time <- Sys.time()
+
+running_time <- end_time-start_time
+
+library(tidyr)
+
+# Create the pivot table
+pivot_table <- results_df %>%
+  pivot_wider(names_from = Model, values_from = PValue)
+
+# Print the pivot table
+print(pivot_table)
+
+library(fmsb)
+
+# Prepare the data for radar chart
+radar_data <- as.data.frame(t(pivot_table[-1]))
+colnames(radar_data) <- pivot_table$lpvalue
+radar_data <- rbind(rep(max(radar_data), ncol(radar_data)), rep(min(radar_data), ncol(radar_data)), radar_data)
+
+# Plot the radar chart
+radarchart(radar_data, axistype = 1,
+           title = "Radar Chart of Models by PValue",
+           pcol = rainbow(nrow(radar_data)-2), pfcol = rainbow(nrow(radar_data)-2, alpha=0.5), plwd = 2)
+legend(x = 1.1, y = 1.1, legend = rownames(radar_data)[-c(1,2)], col = rainbow(nrow(radar_data)-2), lty = 1, lwd = 2)
+
+
 
 
 
