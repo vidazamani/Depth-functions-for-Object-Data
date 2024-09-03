@@ -165,7 +165,10 @@ suggestedSol <- rbind(Matrix_to_vector(many_S[,,ord[n]]),
 
 short_sol = (sweep(suggestedSol,2,colMeans(encoded_train),"-"))%*%(loading)
 
+### Number of Principal Components
 k = 7
+
+
 
 lower_1 = short_sol[1,1:k] - 0.5
 upper_1 = short_sol[1,1:k] + 0.5
