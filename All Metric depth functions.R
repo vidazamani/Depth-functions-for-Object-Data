@@ -14,7 +14,7 @@ MLD <- function(D){
         
         if (i<j) {
           maximum[i] = max(D[i,p],D[j,p])
-          if (D[i,j]>maximum[i]) {
+          if (D[i,j]>maximum[i]+1e-6) {
             s = s+1
           }
           
@@ -139,6 +139,7 @@ MOD2 <- function(D){
       }
     }
     #area[k] = sum(upper.tri(p)*p)
+    p[p< 1e-6] = 0
     area[k] = sum(sqrt(p))
     ojadepth[k] = 1 / (1 + (1/(0.5*(n^2-n))*(area[k])))
   }
@@ -234,5 +235,3 @@ MOD3 <- function(D){
 #   return(ojadepth)
 #   
 # }
-############################################
-### This is the end of this code ###
