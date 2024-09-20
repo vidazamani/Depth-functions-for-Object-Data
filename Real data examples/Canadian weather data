@@ -156,11 +156,7 @@ mtext(p, side=4,
       at=CanadianWeather$dailyAv[365, p, "Temperature.C"],
       las=1)
 
-msddd = c()
-for (j in 1:10) {
-  msddd[j] = pvalue_canada_weather(1,1000,MSD)
-  
-}
+
 
 pvalue_canada_weather <- function(lp_value, iter, depth_fun) {
   
@@ -169,8 +165,6 @@ pvalue_canada_weather <- function(lp_value, iter, depth_fun) {
   for (i in 1:iter) {
     
     fake_labels <- sample(c(rep("ap",20),rep("ca",15)), 35, replace = FALSE)
-    # new_data <- CanadianWeather$dailyAv[,,1]
-    # colnames(new_data) <- fake_labels
     
     ap_fake <- ft_s[fake_labels %in% c("ap")]
     
@@ -199,13 +193,18 @@ pvalue_canada_weather <- function(lp_value, iter, depth_fun) {
   
   #Difference in means for real observed data
   
-  ordap <- order(depth_fun(Dismatrixap2),decreasing = TRUE)[1]
-  deepestap <- fdata(ftg1)[ordap]
+  Dismatrixap_real <- metric.lp(fdata(ftg1), lp = lp_value)
   
-  ordca <- order(depth_fun(Dismatrixca2),decreasing = TRUE)[1]
-  deepestca <- fdata(ftg2)[ordca]
+  Dismatrixca_real <- metric.lp(fdata(ftg2), lp = lp_value)
   
-  observed <- metric.lp(deepestap,deepestca, lp = lp_value)
+  
+  ordap_r <- order(depth_fun(Dismatrixap_real),decreasing = TRUE)[1]
+  deepestap_real <- fdata(ftg1)[ordap_r]
+  
+  ordca_r <- order(depth_fun(Dismatrixca_real),decreasing = TRUE)[1]
+  deepestca_real <- fdata(ftg2)[ordca_r]
+  
+  observed <- metric.lp(deepestap_real,deepestca_real, lp = lp_value)
   
   
   pvalue <- sum(abs(distribution) >= abs(c(observed)))/(iter)
@@ -221,7 +220,7 @@ set.seed(2222)
 ##### Parameters 
 
 iter = 5000
-lp_values <- c(1, 2, 3, 4, 5, 10, 20, 50)
+lp_values <- c(0, 1, 2, 3, 4, 5, 10, 20)
 model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
 models <- list(MOD3, MOD2, MHD, MLD, MSD)
 
@@ -257,17 +256,246 @@ print(pivot_table)
 
 library(fmsb)
 
-# Prepare the data for radar chart
-radar_data <- as.data.frame(t(pivot_table[-1]))
-colnames(radar_data) <- pivot_table$lpvalue
-radar_data <- rbind(rep(max(radar_data), ncol(radar_data)), rep(min(radar_data), ncol(radar_data)), radar_data)
+# # Prepare the data for radar chart
+# radar_data <- as.data.frame(t(pivot_table[-1]))
+# colnames(radar_data) <- pivot_table$lpvalue
+# radar_data <- rbind(rep(max(radar_data), ncol(radar_data)), rep(min(radar_data), ncol(radar_data)), radar_data)
+# 
+# # Plot the radar chart
+# radarchart(radar_data, axistype = 1,
+#            title = "Radar Chart of Models by P-values",
+#            pcol = rainbow(nrow(radar_data)-2), pfcol = rainbow(nrow(radar_data)-2, alpha=0.5), plwd = 2)
+# legend(x = 1.1, y = 1.1, legend = rownames(radar_data)[-c(1,2)], col = rainbow(nrow(radar_data)-2), lty = 1, lwd = 2)
 
-# Plot the radar chart
-radarchart(radar_data, axistype = 1,
-           title = "Radar Chart of Models by PValue",
-           pcol = rainbow(nrow(radar_data)-2), pfcol = rainbow(nrow(radar_data)-2, alpha=0.5), plwd = 2)
-legend(x = 1.1, y = 1.1, legend = rownames(radar_data)[-c(1,2)], col = rainbow(nrow(radar_data)-2), lty = 1, lwd = 2)
 
+
+library(ggplot2)
+library(reshape2)
+library(readxl)
+
+pivot_table <- read_excel("C:/Users/vizama/Documents/1st paper/Real data Example/canada weather.xlsx")
+
+# Melt the pivot table for plotting
+pivot_long <- melt(pivot_table, id.vars = "lpvalue")
+
+# Plot the facet plot
+ggplot(pivot_long, aes(x = factor(lpvalue), y = value, fill = factor(lpvalue))) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ variable) +
+  labs(title = "P-values by lp_value for Each Model",
+       x = "lp_value", y = "PValue") +
+  theme_minimal()
+
+
+# Plot the bar plot
+ggplot(pivot_long, aes(x = factor(lpvalue), y = value, fill = variable)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "P-values by lp_value and Model",
+       x = "lp_value", y = "P-values", fill = "Model") +
+  theme_minimal()
+
+
+
+# Install ggpattern if you haven't already
+# install.packages("remotes")
+# remotes::install_github("coolbutuseless/ggpattern")
+
+library(ggplot2)
+library(reshape2)
+library(ggpattern) 
+
+# Create the bar plot with patterns for black-and-white printing
+ggplot(pivot_long, aes(x = factor(lpvalue), y = value, fill = variable, pattern = variable)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste("Size of p in"," ", L[p],"-", 'norm')),
+       y = "P-value", fill = " ", pattern = " ") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(0.5, "cm"),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))
+
+
+My_Theme = theme(
+  axis.title.x = element_text(size = 16),
+  axis.text.x = element_text(size = 8),
+  axis.title.y = element_text(size = 12))
+
+ggplot(pivot_long, aes(x = factor(lpvalue), y = value, fill = variable, pattern = variable)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste("Size of p in"," ", L[italic(p)],"-", 'norm')),
+       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(0.7, "cm"),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_hline(yintercept=0.05, linetype="dashed", color = "black",
+             linewidth=1)+ My_Theme
+
+
+
+ggplot(pivot_long, aes(x = factor(lpvalue), y = value, fill = variable, pattern = variable)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste("Size of p in"," ", L[italic(p)],"-", 'norm')),
+       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(0.7, "cm"),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_hline(yintercept=0.05, linetype="dashed", color = "black",
+             linewidth=1)+ My_Theme
+
+
+ggplot(pivot_long, aes(x = factor(lpvalue), y = value, fill = variable, pattern = variable)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste("Size of p in"," ", L[italic(p)],"-", 'norm')),
+       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
+  theme_classic() +
+  theme(legend.position = "inside",
+        legend.position.inside =  c(.81, .95),
+        legend.key.size = unit(0.9, "cm"),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_hline(yintercept=0.05, linetype="dashed", color = "black",
+             linewidth=1)+ My_Theme
+
+
+
+
+
+# Plot the line plot
+# ggplot(pivot_long, aes(x = lpvalue, y = value, color = variable, group = variable)) +
+#   geom_line() +
+#   geom_point() +
+#   labs(title = "P-values Across lp_values for Each Model",
+#        x = "lp_value", y = "P-values", color = "Model") +
+#   theme_minimal()
+# 
+# 
+# # Plot the heatmap
+# ggplot(pivot_long, aes(x = variable, y = factor(lpvalue), fill = value)) +
+#   geom_tile(color = "white") +
+#   scale_fill_gradient(low = "white", high = "blue") +
+#   labs(title = "Heatmap of P-values by Model and lp_value",
+#        x = "Model", y = "lp_value", fill = "P-values") +
+#   theme_minimal()
+# 
+# 
+# # Plot the black-and-white heatmap
+# ggplot(pivot_long, aes(x = variable, y = factor(lpvalue), fill = value)) +
+#   geom_tile(color = "black") +  # Add black borders to the tiles
+#   scale_fill_gradient(low = "white", high = "black", na.value = "gray90") +  # Shades of gray
+#   geom_text(aes(label = round(value, 2)), color = "black", size = 3) +  # Add text labels
+#   labs(title = "Heatmap of PValues by Model and lp_value (B&W)",
+#        x = "Model", y = "lp_value", fill = "PValue") +
+#   theme_minimal(base_size = 14) +  # Increase base text size for visibility
+#   theme(
+#     axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better readability
+#     panel.grid = element_blank(),  # Remove gridlines
+#     plot.title = element_text(hjust = 0.5, face = "bold")  # Center and bold the title
+#   )
+# 
+# ggplot(pivot_long, aes(x = variable, y = factor(lpvalue), fill = value)) +
+#   geom_tile(color = "black") +  # Add black borders to tiles
+#   scale_fill_gradient(low = "white", high = "black", na.value = "gray90") +  # Shades of gray
+#   geom_text(aes(label = round(value, 2)), color = "black", size = 3) +  # Add text labels
+#   geom_text(aes(label = ifelse(value > 0.05, "*", "")), vjust = -1.5, color = "red", size = 3) +  # Annotate with asterisks
+#   labs(title = "Heatmap of PValues by Model and lp_value with Annotations",
+#        x = "Model", y = "lp_value", fill = "PValue") +
+#   theme_minimal(base_size = 14) +  # Increase base text size for visibility
+#   theme(
+#     axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels
+#     panel.grid = element_blank(),  # Remove gridlines
+#     plot.title = element_text(hjust = 0.5, face = "bold")  # Center and bold the title
+#   )
+# 
+# ggplot(pivot_long, aes(x = variable, y = factor(lpvalue), fill = value)) +
+#   geom_tile(color = "black") +
+#   scale_fill_gradient(low = "white", high = "black", na.value = "gray90") +
+#   geom_text(aes(label = round(value, 2)), color = "black", size = 4, fontface = "bold") +  # Bold labels for clarity
+#   labs(title = "Enhanced Heatmap of PValues", x = "Model", y = "lp_value", fill = "PValue") +
+#   theme_minimal(base_size = 16) +
+#   theme(
+#     axis.text.x = element_text(angle = 45, hjust = 1, size = 12, face = "italic"),  # Italicize x-axis labels
+#     axis.text.y = element_text(size = 12, face = "italic"),  # Italicize y-axis labels
+#     plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  # Larger, centered title
+#     panel.grid = element_blank()
+#   )
+# 
+# ggplot(pivot_long, aes(x = variable, y = factor(lpvalue), fill = value)) +
+#   geom_tile(color = "black") +  # Add black borders to tiles
+#   scale_fill_gradient(low = "white", high = "black", limits = c(0, 1), na.value = "gray90") +  # Normalize color scale from 0 to 1
+#   geom_text(aes(label = round(value, 2)), color = "black", size = 3) +  # Add text labels
+#   labs(title = "Heatmap of PValues by Model and lp_value (Normalized to 0-1)",
+#        x = "Model", y = "lp_value", fill = "PValue") +
+#   theme_minimal(base_size = 14) +  # Increase base text size for visibility
+#   theme(
+#     axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels
+#     panel.grid = element_blank(),  # Remove gridlines
+#     plot.title = element_text(hjust = 0.5, face = "bold")  # Center and bold the title
+#   )
+# 
+# # Plot the heatmap with full PValue range from 0 to 1
+# ggplot(pivot_long, aes(x = variable, y = factor(lpvalue), fill = value)) +
+#   geom_tile(color = "white") +
+#   scale_fill_gradient(low = "white", high = "blue", limits = c(0, 1), na.value = "grey50") +
+#   labs(title = "Heatmap of PValues by Model and lp_value",
+#        x = "Model", y = "lp_value", fill = "PValue") +
+#   theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# 
+# # Convert Model to a factor with specific levels for control over order
+# pivot_long$variable <- factor(pivot_long$variable, levels = unique(pivot_long$variable))
+# 
+# # Plot the bar plot optimized for black-and-white printing
+# ggplot(pivot_long, aes(x = factor(lpvalue), y = value, fill = variable, pattern = variable)) +
+#   geom_bar(stat = "identity", position = "dodge", color = "black") +
+#   scale_fill_grey(start = 0.3, end = 0.9) +
+#   labs(title = "PValues by lp_value and Model",
+#        x = "lp_value", y = "PValue", fill = "Model") +
+#   theme_minimal() +
+#   theme(legend.position = "bottom",
+#         legend.key.size = unit(0.5, "cm"),
+#         axis.text.x = element_text(angle = 45, hjust = 1)) +
+#   guides(fill = guide_legend(nrow = 2, byrow = TRUE))
 
 
 
