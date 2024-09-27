@@ -33,7 +33,7 @@ my_col_2[1] <- my_col[3]
 
 
 
-par(mfrow = c(1,3))
+par(mfrow = c(1,2))
 
 # Define line types for each region
 line_types <- c(1, 2, 1, 2)  # You can choose different types of lines: 1 = solid, 2 = dashed, 3 = dotted
@@ -84,16 +84,16 @@ plot(ft_s, col = 'white', lty = 1, xlab = "Time (days)",
      ylab = "the deepest temperature of each group", cex.lab = 0.75)
 
 plot(ft_s[(1:35)[g1][ordap]], add = TRUE,
-     col = 2, lty = 2,lwd = 3,
+     col = my_col_2[2], lty = 2,lwd = 3,
      xlab = "Time (days)")
-plot(ft_s[(1:35)[g2][ordca]], col = 1, lwd = 1.5,add = TRUE,
+plot(ft_s[(1:35)[g2][ordca]], col = my_col_2[1], lwd = 1.5,add = TRUE,
      lty = 1, xlab = "Time (days)")
 
 
 
 legend(-20, 22, legend = c("Atlantic or Pacific", "Arctic or Continental"),
        lwd = c(3,1.5),
-       col = c(2, 1),
+       col = c(my_col_2[2], my_col_2[1]),
        cex = 0.5,
        lty = c(2,1),
        bty = "n")
