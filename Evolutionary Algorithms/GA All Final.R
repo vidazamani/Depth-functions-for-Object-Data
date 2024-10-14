@@ -11,6 +11,7 @@ library(parallel)
 library(dplyr)
 library(viridis)
 library(ggsci)
+library(ggpubr)
 
 
 # generate data function 
@@ -370,7 +371,7 @@ data4 <-  data3[c(2,4)] %>% group_by(sample_size) %>%
 
 ###### Estimation error plot
 
-ggplot() +  
+p1 <- ggplot() +  
   geom_line(data = data2, aes(x = sample_size,
                               y = avg_outof_sample_error,
                               linetype = PCA_n,
@@ -401,7 +402,7 @@ ggplot() +
 
 #### Time plot in logaritmic scale
 
-ggplot() +  
+p2 <- ggplot() +  
   geom_line(data = data3, aes(x = sample_size,
                               y = avg_pca_time,
                               linetype = PCA_n,
@@ -437,7 +438,7 @@ ggplot() +
 
 #### Time plot 
 
-ggplot() +  
+p3 <- ggplot() +  
   geom_line(data = data3, aes(x = sample_size,
                               y = avg_pca_time,
                               linetype = PCA_n,
@@ -469,6 +470,7 @@ ggplot() +
 
 stopCluster(cl)
 
-
-GA_oja2(10,p,eps,mu,1, 0.25)
+pdf("C:/1stPaper/Codes/GA/ga plot.pdf", 6 ,4)
+ggarrange(p1, p2, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
+dev.off()
 
