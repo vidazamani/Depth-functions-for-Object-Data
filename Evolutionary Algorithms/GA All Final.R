@@ -102,12 +102,14 @@ vector_to_matrix = function(Cholvec){
 source("C:/Users/vizama/Documents/1st paper/Box_Parallel/Codes/All Metric depth functions.R")
 
 
-start_timepca = Sys.time()
 
 GA_oja2 = function(n, p, eps, mu, iterga, PEL){
   
+  
   # generate data
   many_S <- gener_corr_data(p,n,eps,mu)
+  
+  start_timepca = Sys.time()
   
   # Compute the distance matrix between the corr matrices
   D <- CovDist(many_S, method = "AIRM")
@@ -224,7 +226,7 @@ GA_oja2 = function(n, p, eps, mu, iterga, PEL){
   
   End_timepca = Sys.time()
   
-  pcatime = End_timepca - start_timepca 
+  pcatime = difftime(End_timepca ,start_timepca, units = 'secs')
   
   # Compare this to the error between the deepest in-sample point and the true deepest point
   
@@ -248,7 +250,7 @@ GA_oja2 = function(n, p, eps, mu, iterga, PEL){
   
   end_timeo = Sys.time()
   
-  Oja2time = end_timeo - start_timeo
+  Oja2time = difftime(end_timeo, start_timeo, units = 'secs')
   
   return(data.frame(OSE = out_of_sample_error,
                     ISE = in_sample_error,pcatime,Oja2time))
@@ -422,7 +424,7 @@ p2 <- ggplot() +
                                 "0.75" = "purple",
                                 "Oja depth" = "red")) +
   scale_x_continuous(name="Sample Size")+
-  scale_y_log10(name = 'Estimation time in log')+
+  scale_y_log10(name = 'Estimation time in sec')+
   theme_bw()+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9),
