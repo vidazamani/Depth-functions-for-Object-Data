@@ -381,17 +381,17 @@ p1 <- ggplot() +
             linewidth = 1) +  
   geom_line(data = data1, aes(x = sample_size,
                               y = avg_in_sample_error,
-                              linetype = 'Oja depth',
-                              colour = 'Oja depth'),
+                              linetype = 'In-Sample Estimator',
+                              colour = 'In-Sample Estimator'),
             linewidth = 1)+
   scale_linetype_manual(values = c("0.25"= "dashed",
                                    "0.5" = "solid",
                                    "0.75" = "dotted",
-                                   "Oja depth" = "dotdash"))+
+                                   "In-Sample Estimator" = "dotdash"))+
   scale_color_manual(values = c("0.25"= "blue",
                                 "0.5" = "green",
                                 "0.75" = "purple",
-                                "Oja depth" = "red"))+
+                                "In-Sample Estimator" = "red"))+
   scale_x_continuous(name="Sample Size")+
   scale_y_continuous(name = 'Estimation Error')+
   theme_bw()+ 
@@ -412,17 +412,17 @@ p2 <- ggplot() +
             linewidth = 1) +  
   geom_line(data = data4, aes(x = sample_size,
                               y = avg_oja_time,
-                              linetype = 'Oja depth',
-                              colour = 'Oja depth'),
+                              linetype = 'In-Sample Estimator',
+                              colour = 'In-Sample Estimator'),
             linewidth = 1)+
   scale_linetype_manual(values = c("0.25"= "dashed",
                                    "0.5" = "solid",
                                    "0.75" = "dotted",
-                                   "Oja depth" = "dotdash"))+
+                                   "In-Sample Estimator" = "dotdash"))+
   scale_color_manual(values = c("0.25"= "blue",
                                 "0.5" = "green",
                                 "0.75" = "purple",
-                                "Oja depth" = "red")) +
+                                "In-Sample Estimator" = "red")) +
   scale_x_continuous(name="Sample Size")+
   scale_y_log10(name = 'Estimation time in sec')+
   theme_bw()+ 
@@ -448,17 +448,17 @@ p3 <- ggplot() +
             linewidth = 1) +  
   geom_line(data = data4, aes(x = sample_size,
                               y = avg_oja_time,
-                              linetype = 'Oja depth',
-                              colour = 'Oja depth'),
+                              linetype = 'In-Sample Estimator',
+                              colour = 'In-Sample Estimator'),
             linewidth = 1)+
   scale_linetype_manual(values = c("0.25"= "dashed",
                                    "0.5" = "solid",
                                    "0.75" = "dotted",
-                                   "Oja depth" = "dotdash"))+
+                                   "In-Sample Estimator" = "dotdash"))+
   scale_color_manual(values = c("0.25"= "blue",
                                 "0.5" = "green",
                                 "0.75" = "purple",
-                                "Oja depth" = "red")) +
+                                "In-Sample Estimator" = "red")) +
   scale_x_continuous(name="Sample Size")+
   scale_y_continuous(name = 'Estimation time')+
   theme_bw()+ 
@@ -466,7 +466,6 @@ p3 <- ggplot() +
         plot.subtitle = element_text(size = 9),
         legend.position="bottom",
         legend.title = element_blank())
-
 
 
 
