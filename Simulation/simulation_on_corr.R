@@ -70,30 +70,30 @@ simulation_with_corr <- function(p,n,eps,mu){
   start_time = Sys.time()
   DMHD <- MHD(D)
   end_time = Sys.time()
-  MHDt <- end_time - start_time
+  MHDt <- difftime(end_time, start_time, units = 'secs')
   
   start_time = Sys.time()
   DMSD <- MSD(D)
   end_time = Sys.time()
-  MSDt <- end_time - start_time
+  MSDt <- difftime(end_time, start_time, units = 'secs')
   
   
   start_time = Sys.time()
   DMLD <- MLD(D)
   end_time = Sys.time()
-  MLDt <- end_time - start_time
+  MLDt <- difftime(end_time, start_time, units = 'secs')
   
   
   start_time = Sys.time()
   MOD2D <- MOD2(D)
   end_time = Sys.time()
-  MOD2t <- end_time - start_time
+  MOD2t <- difftime(end_time, start_time, units = 'secs')
   
   
   start_time = Sys.time()
   MOD3D <- MOD3(D)
   end_time = Sys.time()
-  MOD3t <- end_time - start_time
+  MOD3t <- difftime(end_time, start_time, units = 'secs')
   
   ###########################################
   
@@ -236,7 +236,7 @@ stopCluster(cl)
 
 
 endtime <- Sys.time()
-duration <- endtime - starttime
+duration <-  difftime(endtime, starttime, units = 'secs')
 
 
 
@@ -428,5 +428,18 @@ plotuni = ggplot(p3eps0.3,aes(x = sample_size, y = avg_error, col = method))+
        subtitle = "when matrix dimnesion is 3 and 5% of Distribution is contaminated")+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9))
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
