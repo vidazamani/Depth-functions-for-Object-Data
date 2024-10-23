@@ -221,13 +221,30 @@ duration <- endtime - starttime
 ###### Visualization
 
 
-sph_data <- dget("C:\\Users\\vizama\\Documents\\1st paper\\Simulation results on sphere dataset\\Singlefiledata\\sph_data.txt")
+sph_data <- dget("C:/1stPaper/Codes/Simulation results on sphere dataset/data/sph_data.txt")
 
+
+
+#### MOD3/MOD3 plot
+
+specific_method <- "Metric Oja depth 3D"
+specific_method <- "Metric Oja depth 2D"
+specific_method <- "Metric Spatial depth"
+
+
+reference_values <- sph_data %>%
+  filter(method == specific_method) %>%
+  pull(avg_error)
+
+df <- sph_data %>% group_by(method) %>% 
+  mutate(Normalized = avg_error / reference_values)
+
+# head(df[df$method == specific_method,c(1,6,8)])
 
 pdf(file = 
-      "C:/Users/vizama/Documents/1st paper/Simulation results on sphere dataset/pic/Avg_Error/accsent sph.pdf",  
+      "C:/1stPaper/Codes/Simulation results on sphere dataset/pic/error/accsent sph error new.pdf",  
     width = 10, # The width of the plot in inches
-    height = 4) # The height of the plot in inches
+    height = 6) # The height of the plot in inches
 
 
 # New facet label names for matrix dimension variable
@@ -239,36 +256,86 @@ otl.labs <- c("Outlier rate = 5%", "Outlier rate = 30%")
 names(otl.labs) <- c("0.05", "0.3")
 
 
-
-plot = ggplot(sph_data,aes(x = sample_size, y = avg_error, col = method))+ 
+ggplot()+ 
   facet_grid(outlier_rate~matrix_dimension,
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
-  geom_line(linewidth = 0.7)+
+  geom_line(data = df, aes(x = sample_size,
+                           y = Normalized,
+                           colour = method,
+                           linetype = method),
+            linewidth = 1)+
+  scale_linetype_manual(values = c("dashed", "solid", "dotted", "dotdash", "solid")) +
+  scale_color_manual(values = c("blue", "green", "purple", "red", "black")) +
   scale_x_continuous(name="Sample size")+
   scale_y_log10(name = 'Estimation error')+
   theme_bw()+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9),
         legend.position="bottom",
-        legend.title = element_blank())
+        legend.title = element_blank(),
+        legend.text=element_text(size=12),
+        strip.text.x = element_text(size = 15, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 15, 
+                                    colour = "black",
+                                    angle = 90))
 
 
-
-
-
-plot+scale_color_brewer(palette = 'Accent', name = 'Method')
-
-cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
-          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-plot+scale_color_manual(values = cbp1)
-
-plot+scale_color_brewer(palette = 'Paired')
-
-plot+scale_color_brewer(palette = 'Set1')
 
 dev.off()
+
+
+
+
+##### Without division
+
+pdf(file = 
+      "C:/1stPaper/Codes/Simulation results on sphere dataset/pic/error/accsent sph error new without division.pdf",  
+    width = 10, # The width of the plot in inches
+    height = 6) # The height of the plot in inches
+
+
+# New facet label names for matrix dimension variable
+mtd.labs <- c("p = 3", "p = 5", "p = 10")
+names(mtd.labs) <- c(3, 5, 10)
+
+# New facet label names for outlier rate variable
+otl.labs <- c("Outlier rate = 5%", "Outlier rate = 30%")
+names(otl.labs) <- c("0.05", "0.3")
+
+
+ggplot()+ 
+  facet_grid(outlier_rate~matrix_dimension,
+             labeller = labeller(matrix_dimension = mtd.labs,
+                                 outlier_rate = otl.labs))+
+  geom_line(data = sph_data, aes(x = sample_size,
+                                 y = avg_error,
+                                 colour = method,
+                                 linetype = method),
+            linewidth = 0.8)+
+  scale_linetype_manual(values = c("dashed", "solid", "dotted", "dotdash", "dashed")) +
+  scale_color_manual(values = c("blue", "green", "purple", "red", "black")) +
+  scale_x_continuous(name="Sample size")+
+  scale_y_log10(name = 'Estimation error')+
+  theme_bw()+ 
+  theme(plot.title = element_text(size = 12), 
+        plot.subtitle = element_text(size = 9),
+        legend.position="bottom",
+        legend.title = element_blank(),
+        legend.text=element_text(size=12),
+        strip.text.x = element_text(size = 15, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 15, 
+                                    colour = "black",
+                                    angle = 90))
+
+
+dev.off()
+
+
 
 
 ######## Running time plot 
@@ -315,4 +382,3 @@ plot+scale_color_brewer(palette = 'Paired')
 plot+scale_color_brewer(palette = 'Set1')
 
 dev.off()
-
