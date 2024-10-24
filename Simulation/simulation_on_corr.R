@@ -236,7 +236,7 @@ stopCluster(cl)
 
 
 endtime <- Sys.time()
-duration <-  difftime(endtime, starttime, units = 'secs')
+duration <-  difftime(endtime, starttime, units = 'days')
 
 
 
@@ -246,10 +246,75 @@ corr_sim_data <- dget("C:\\Users\\vizama\\Documents\\1st paper\\Box_Parallel\\da
 
 ### 2 * 3 panel
 
+###################### MOD3/MOD3 plot ########################
+
+specific_method <- "Metric Oja depth 3D"
+specific_method <- "Metric Oja depth 2D"
+specific_method <- "Metric Spatial depth"
+
+
+reference_values <- corr_sim_data %>%
+  filter(method == specific_method) %>%
+  pull(avg_error)
+
+df <- corr_sim_data %>% group_by(method) %>% 
+  mutate(Normalized = avg_error / reference_values)
+
+# head(df[df$method == specific_method,c(1,6,8)])
+
 pdf(file = 
-    "C:/Users/vizama/Documents/1st paper/Box_Parallel/pic/Avg_Error/original.pdf",  
+      "C:/1stPaper/Codes/Sim_on_corr/Pics/Avg_Error/2 times 3/corr error div.pdf",  
+    width = 11, # The width of the plot in inches
+    height = 7) # The height of the plot in inches
+
+# New facet label names for matrix dimension variable
+mtd.labs <- c("p = 3", "p = 5", "p = 10")
+names(mtd.labs) <- c(3, 5, 10)
+
+# New facet label names for outlier rate variable
+otl.labs <- c("Outlier rate = 5%", "Outlier rate = 30%")
+names(otl.labs) <- c("0.05", "0.3")
+
+
+ggplot()+ 
+  facet_grid(outlier_rate~matrix_dimension,
+             labeller = labeller(matrix_dimension = mtd.labs,
+                                 outlier_rate = otl.labs))+
+  geom_line(data = df, aes(x = sample_size,
+                           y = Normalized,
+                           colour = method,
+                           linetype = method),
+            linewidth = 1)+
+  scale_linetype_manual(values = c("dashed", "solid", "dotted", "dotdash", "solid")) +
+  scale_color_manual(values = c("blue", "green", "purple", "red", "black")) +
+  scale_x_continuous(name="Sample size")+
+  scale_y_log10(name = 'Estimation error')+
+  theme_bw()+ 
+  theme(plot.title = element_text(size = 12), 
+        plot.subtitle = element_text(size = 9),
+        legend.position="bottom",
+        legend.title = element_blank(),
+        legend.text=element_text(size=14),
+        strip.text.x = element_text(size = 15, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 15, 
+                                    colour = "black",
+                                    angle = 90))
+
+
+
+dev.off()
+
+
+
+
+################## Without division #######################
+
+pdf(file = 
+      "C:/1stPaper/Codes/Sim_on_corr/Pics/Avg_Error/2 times 3/corr error withoutdiv.pdf",  
     width = 10, # The width of the plot in inches
-    height = 4) # The height of the plot in inches
+    height = 6) # The height of the plot in inches
 
 
 # New facet label names for matrix dimension variable
@@ -261,37 +326,34 @@ otl.labs <- c("Outlier rate = 5%", "Outlier rate = 30%")
 names(otl.labs) <- c("0.05", "0.3")
 
 
-
-plot = ggplot(corr_sim_data,aes(x = sample_size, y = avg_error, col = method))+ 
+ggplot()+ 
   facet_grid(outlier_rate~matrix_dimension,
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
-  geom_line(linewidth = 0.7)+
+  geom_line(data = corr_sim_data, aes(x = sample_size,
+                                 y = avg_error,
+                                 colour = method,
+                                 linetype = method),
+            linewidth = 0.8)+
+  scale_linetype_manual(values = c("dashed", "solid", "dotted", "dotdash", "dashed")) +
+  scale_color_manual(values = c("blue", "green", "purple", "red", "black")) +
   scale_x_continuous(name="Sample size")+
   scale_y_log10(name = 'Estimation error')+
   theme_bw()+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9),
         legend.position="bottom",
-        legend.title = element_blank())
+        legend.title = element_blank(),
+        legend.text=element_text(size=12),
+        strip.text.x = element_text(size = 15, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 15, 
+                                    colour = "black",
+                                    angle = 90))
 
-
-
-
-
-plot+scale_color_brewer(palette = 'Accent', name = 'Method')
-
-cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
-          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-plot+scale_color_manual(values = cbp1)
-
-plot+scale_color_brewer(palette = 'Paired')
-
-plot+scale_color_brewer(palette = 'Set1')
 
 dev.off()
-
 
 
 
@@ -320,7 +382,7 @@ names(otl.labs) <- c("0.05", "0.3")
 
 
 
-plot = ggplot(bagg,aes(x = sample_size, y = avg_error, col = method))+ 
+ggplot(bagg,aes(x = sample_size, y = avg_error, col = method))+ 
   facet_grid(matrix_dimension~outlier_rate,
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
@@ -335,23 +397,7 @@ plot = ggplot(bagg,aes(x = sample_size, y = avg_error, col = method))+
 
 
 
-
-
-plot+scale_color_brewer(palette = 'Accent', name = 'Method')
-
-cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
-          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-plot+scale_color_manual(values = cbp1)
-
-plot+scale_color_brewer(palette = 'Paired')
-
-plot+scale_color_brewer(palette = 'Set1')
-
 dev.off()
-
-
-
 
 
 
@@ -360,9 +406,9 @@ dev.off()
 ### 2 * 3 panel
 
 pdf(file = 
-      "C:/Users/vizama/Documents/1st paper/Box_Parallel/pic/Avg_Time/accent T.pdf",  
+      "C:/1stPaper/Codes/Sim_on_corr/Pics/Avg_Time/corr time.pdf",  
     width = 10, # The width of the plot in inches
-    height = 4) # The height of the plot in inches
+    height = 6) # The height of the plot in inches
 
 
 # New facet label names for matrix dimension variable
@@ -374,32 +420,35 @@ otl.labs <- c("Outlier rate = 5%", "Outlier rate = 30%")
 names(otl.labs) <- c("0.05", "0.3")
 
 
-plot2 = ggplot(corr_sim_data,aes(x = sample_size, y = avg_time, col = method))+ 
+ggplot()+ 
   facet_grid(outlier_rate~matrix_dimension,
              labeller = labeller(matrix_dimension = mtd.labs,
                                  outlier_rate = otl.labs))+
-  geom_line(linewidth = 0.7)+
-  scale_y_log10(name = 'Running time in seconds')+
+  geom_line(data = corr_sim_data, aes(x = sample_size,
+                                      y = avg_time,
+                                      colour = method,
+                                      linetype = method),
+            linewidth = 0.8)+
+  scale_linetype_manual(values = c("dashed", "solid", "dotted", "dotdash", "dashed")) +
+  scale_color_manual(values = c("blue", "green", "purple", "red", "black")) +
   scale_x_continuous(name="Sample size")+
+  scale_y_log10(name = 'Estimation error')+
   theme_bw()+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9),
         legend.position="bottom",
-        legend.title = element_blank())
+        legend.title = element_blank(),
+        legend.text=element_text(size=12),
+        strip.text.x = element_text(size = 15, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 15, 
+                                    colour = "black",
+                                    angle = 90))
 
-
-plot2+scale_color_brewer(palette = 'Accent', name = 'Method')
-
-cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
-          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-plot+scale_color_manual(values = cbp1)
-
-plot+scale_color_brewer(palette = 'Paired')
-
-plot+scale_color_brewer(palette = 'Set1')
 
 dev.off()
+
 
 #####
 
@@ -415,19 +464,6 @@ plot3 = ggplot(corr_sim_data,aes(x = sample_size, y = avg_error, col = method,li
         plot.subtitle = element_text(size = 9))+
   scale_y_log10()
 
-
-###### Uni Plot
-
-
-plotuni = ggplot(p3eps0.3,aes(x = sample_size, y = avg_error, col = method))+ 
-  geom_line(linewidth = 0.7)+
-  scale_x_continuous(name="sample size")+
-  scale_y_continuous(name = 'Average Error')+
-  theme_bw()+ 
-  labs(title = "Performance of each Metric Depth Function", 
-       subtitle = "when matrix dimnesion is 3 and 5% of Distribution is contaminated")+ 
-  theme(plot.title = element_text(size = 12), 
-        plot.subtitle = element_text(size = 9))
 
 
 
