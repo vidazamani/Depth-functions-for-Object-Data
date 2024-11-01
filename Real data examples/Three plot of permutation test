@@ -1,0 +1,147 @@
+library(ggplot2)
+library(reshape2)
+library(readxl)
+library(ggpattern) 
+library(patchwork)
+library(ggpubr)
+
+
+
+
+
+pivot_table1 <- read_excel("C:/Users/vizama/Documents/1st paper/Real data Example/canada weather.xlsx",
+                          sheet = 4)
+
+pivot_tablerev7 <- read_excel("C:/Users/vizama/Documents/1st paper/Real data Example/Canada weather reversed.xlsx",
+                          sheet = 1)
+
+pivot_tablerev12 <- read_excel("C:/Users/vizama/Documents/1st paper/Real data Example/Canada weather reversed.xlsx",
+                          sheet = 2)
+
+
+
+pivot_long1 <- melt(pivot_table1, id.vars = "lpvalue")
+pivot_longrev7 <- melt(pivot_tablerev7, id.vars = "lpvalue")
+pivot_longrev12 <- melt(pivot_tablerev12, id.vars = "lpvalue")
+
+
+
+
+My_Theme = theme(
+  axis.title.x = element_text(size = 16),
+  axis.text.x = element_text(size = 8),
+  axis.title.y = element_text(size = 12))
+
+
+p1 = ggplot(pivot_long1, aes(x = factor(lpvalue,
+                                       levels = c(1,2, 3, 4, 5, 10, 20,0))
+                            , y = value, fill = variable, pattern = variable)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste("Size of p in"," ", L[italic(p)],"-", 'norm')),
+       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(0.7, "cm"),
+        legend.text=element_text(size=8),
+        strip.text.x = element_text(size = 20, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 20, 
+                                    colour = "black",
+                                    angle = 90),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_hline(yintercept=0.05, linetype="dashed", color = "blue",
+             linewidth=1)+ My_Theme+ 
+  scale_x_discrete(labels = c('0' = expression(infinity)))
+
+
+
+
+p2 = ggplot(pivot_longrev7, aes(x = factor(lpvalue,
+                                        levels = c(1,2, 3, 4, 5, 10, 20,0))
+                             , y = value, fill = variable, pattern = variable)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste("Size of p in"," ", L[italic(p)],"-", 'norm')),
+       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(0.7, "cm"),
+        legend.text=element_text(size=8),
+        strip.text.x = element_text(size = 20, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 20, 
+                                    colour = "black",
+                                    angle = 90),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_hline(yintercept=0.05, linetype="dashed", color = "blue",
+             linewidth=1)+ My_Theme+ 
+  scale_x_discrete(labels = c('0' = expression(infinity)))
+
+
+
+
+
+
+
+p3 = ggplot(pivot_longrev12, aes(x = factor(lpvalue,
+                                        levels = c(1,2, 3, 4, 5, 10, 20,0))
+                             , y = value, fill = variable, pattern = variable)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste("Size of p in"," ", L[italic(p)],"-", 'norm')),
+       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(0.7, "cm"),
+        legend.text=element_text(size=8),
+        strip.text.x = element_text(size = 20, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 20, 
+                                    colour = "black",
+                                    angle = 90),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_hline(yintercept=0.05, linetype="dashed", color = "blue",
+             linewidth=1)+ My_Theme+ 
+  scale_x_discrete(labels = c('0' = expression(infinity)))
+
+
+
+
+
+pdf("C:/Users/vizama/Documents/1st paper/Real data Example/reversed and original.pdf", 10 ,5)
+ggarrange(p1, p2, p3, ncol=3, nrow=1, common.legend = TRUE, legend="bottom")
+dev.off()
+
+
+
