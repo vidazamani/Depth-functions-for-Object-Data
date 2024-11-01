@@ -49,12 +49,12 @@ p1 = ggplot(pivot_long1, aes(x = factor(lpvalue,
        y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
   theme_classic() +
   theme(legend.position = "bottom",
-        legend.key.size = unit(0.7, "cm"),
-        legend.text=element_text(size=8),
-        strip.text.x = element_text(size = 20, 
+        legend.key.size = unit(1, "cm"),
+        legend.text=element_text(size=11),
+        strip.text.x = element_text(size = 25, 
                                     colour = "black",
                                     angle = 90),
-        strip.text.y = element_text(size = 20, 
+        strip.text.y = element_text(size = 25, 
                                     colour = "black",
                                     angle = 90),
         axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -83,12 +83,12 @@ p2 = ggplot(pivot_longrev7, aes(x = factor(lpvalue,
        y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
   theme_classic() +
   theme(legend.position = "bottom",
-        legend.key.size = unit(0.7, "cm"),
-        legend.text=element_text(size=8),
-        strip.text.x = element_text(size = 20, 
+        legend.key.size = unit(1, "cm"),
+        legend.text=element_text(size=11),
+        strip.text.x = element_text(size = 25, 
                                     colour = "black",
                                     angle = 90),
-        strip.text.y = element_text(size = 20, 
+        strip.text.y = element_text(size = 25, 
                                     colour = "black",
                                     angle = 90),
         axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -120,12 +120,12 @@ p3 = ggplot(pivot_longrev12, aes(x = factor(lpvalue,
        y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
   theme_classic() +
   theme(legend.position = "bottom",
-        legend.key.size = unit(0.7, "cm"),
-        legend.text=element_text(size=8),
-        strip.text.x = element_text(size = 20, 
+        legend.key.size = unit(1, "cm"),
+        legend.text=element_text(size=11),
+        strip.text.x = element_text(size = 25, 
                                     colour = "black",
                                     angle = 90),
-        strip.text.y = element_text(size = 20, 
+        strip.text.y = element_text(size = 25, 
                                     colour = "black",
                                     angle = 90),
         axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -139,7 +139,7 @@ p3 = ggplot(pivot_longrev12, aes(x = factor(lpvalue,
 
 
 
-pdf("C:/Users/vizama/Documents/1st paper/Real data Example/reversed and original.pdf", 10 ,5)
+pdf("C:/Users/vizama/Documents/1st paper/Real data Example/reversed and original.pdf", 10 ,6)
 ggarrange(p1, p2, p3, ncol=3, nrow=1, common.legend = TRUE, legend="bottom")
 dev.off()
 
