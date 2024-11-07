@@ -432,7 +432,7 @@ ggplot()+
   scale_linetype_manual(values = c("dashed", "solid", "dotted", "dotdash", "dashed")) +
   scale_color_manual(values = c("blue", "green", "purple", "red", "black")) +
   scale_x_continuous(name="Sample size")+
-  scale_y_log10(name = 'Estimation error')+
+  scale_y_log10(name = 'Running time')+
   theme_bw()+ 
   theme(plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9),
