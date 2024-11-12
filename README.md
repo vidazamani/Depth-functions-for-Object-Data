@@ -1,6 +1,7 @@
 # Depth Functions for Object Data
 
-This project contains code to reproduce the results of the paper with the same name by Zamanifarizhandi, V. and Virta, J.
+This project contains code to reproduce the results of the paper named 'Metric Oja Depth, New Statistical Tool for
+Estimating the Most Central Objects' by Zamanifarizhandi, V. and Virta, J.
 
 The goal of the project was to develope a novel measure of statistical depth, the metric Oja depth applicable to any object data. 
 Main functions
