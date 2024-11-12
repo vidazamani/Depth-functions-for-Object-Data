@@ -7,29 +7,20 @@ The goal of the project was to develope a novel measure of statistical depth, th
 
 All code here is written in R and requires the packages CovTools, ICtest, parallel, fda, ggplot2, ggpattern, ggpubr and ggsci.
 
-## The main functions are:
+## Why this project is useful for you?!
+If you're working with complex datasets, such as matrices or images, the following main functions can help you identify the most central objects within your data. Simply calculate the distances between objects and apply them as an input in our metric functions.
 
-MLD: 
+### The main metric functions are:
 
-MHD: 
-
-MSD: 
-
-MOD2: 
-
-MOD3: 
-
-GA_oja2: 
-
-test_point_depth:
+MLD, MHD, MSD, MOD2, MOD3
 
 In addition the project contains several helper functions for data generation, computing p-value for real dataset examples and the simulations performed in the paper.
 
-## Authors
+### Authors
 
 Zamanifarizhandi, V. and Virta, J.
 
-## License
+### License
 
 
 
