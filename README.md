@@ -5,7 +5,7 @@ Estimating the Most Central Objects' by Zamanifarizhandi, V. and Virta, J.
 
 The goal of the project was to develope a novel measure of statistical depth, the metric Oja depth applicable to any object data. 
 
-All code here is written in R and requires the packages CovTools, ICtest, parallel, fda, ggplot2, ggpattern, ggpubr and ggsci.
+All code here is written in R and the main used packages are CovTools, ICtest, parallel, fda, ggplot2 and GA.
 
 ## Why is this project useful for you?!
 If you're working with complex datasets, such as matrices or images, the following main functions can help you identify the most central objects within your data. Simply calculate the distances between objects and apply them as an input in our metric functions.
