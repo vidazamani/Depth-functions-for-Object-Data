@@ -23,4 +23,9 @@ Zamanifarizhandi, V. and Virta, J.
 ### License
 
 ### References
+1. Tukey, J.W., 1975. Mathematics and the picturing of data, in: James,
+R. (Ed.), Proceedings of the International Congress of Mathematicians,
+Canadian Mathematical Congress. pp. 523–531.
 
+2. Dai, X., Lopez-Pintado, S., 2023. Tukey’s depth for object data. Journal
+of the American Statistical Association 118, 1760–1772.
