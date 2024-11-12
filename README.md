@@ -7,7 +7,7 @@ The goal of the project was to develope a novel measure of statistical depth, th
 
 All code here is written in R and requires the packages CovTools, ICtest, parallel, fda, ggplot2, ggpattern, ggpubr and ggsci.
 
-## Why this project is useful for you?!
+## Why is this project useful for you?!
 If you're working with complex datasets, such as matrices or images, the following main functions can help you identify the most central objects within your data. Simply calculate the distances between objects and apply them as an input in our metric functions.
 
 ### The main metric functions are:
