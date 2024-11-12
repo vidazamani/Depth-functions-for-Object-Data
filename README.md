@@ -22,7 +22,5 @@ Zamanifarizhandi, V. and Virta, J.
 
 ### License
 
-
-
-## References
+### References
 
