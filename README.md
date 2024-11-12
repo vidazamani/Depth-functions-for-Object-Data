@@ -4,7 +4,6 @@ This project contains code to reproduce the results of the paper named 'Metric O
 Estimating the Most Central Objects' by Zamanifarizhandi, V. and Virta, J.
 
 The goal of the project was to develope a novel measure of statistical depth, the metric Oja depth applicable to any object data. 
-Main functions
 
 All code here is written in R and requires the packages CovTools, ICtest, parallel, fda, ggplot2, ggpattern, ggpubr and ggsci.
 
