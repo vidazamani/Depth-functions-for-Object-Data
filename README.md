@@ -20,7 +20,6 @@ In addition the project contains several helper functions for data generation, c
 
 Zamanifarizhandi, V. and Virta, J.
 
-### License
 
 ### References
 1. Tukey, J.W., 1975. Mathematics and the picturing of data, in: James,
