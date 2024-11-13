@@ -29,3 +29,13 @@ Canadian Mathematical Congress. pp. 523–531.
 
 2. Dai, X., Lopez-Pintado, S., 2023. Tukey’s depth for object data. Journal
 of the American Statistical Association 118, 1760–1772.
+
+3. Virta, J., 2023b. Spatial Depth for Data in Metric Spaces. arXiv preprint
+arXiv:2306.09740.
+
+4. Cholaquidis, A., Fraiman, R., Gamboa, F., Moreno, L., 2023. Weighted
+Lens Depth: Some Applications to Supervised Classification. Canadian
+Journal of Statistics 51, 652–673.
+
+5. Geenens, G., Nieto-Reyes, A., Francisci, G., 2023. Statistical Depth in
+Abstract Metric Spaces. Statistics and Computing 33, 46.
