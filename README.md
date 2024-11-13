@@ -16,6 +16,10 @@ MLD, MHD, MSD, MOD2, MOD3
 
 In addition the project contains several helper functions for data generation, computing p-value for real dataset examples and the simulations performed in the paper.
 
+### Great! Then How to Use this Project!
+
+
+
 ### Authors
 
 Zamanifarizhandi, V. and Virta, J.
