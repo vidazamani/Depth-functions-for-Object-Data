@@ -24,6 +24,8 @@ source("YOUR/Path/All Metric depth functions.R")
 
 In nest step, import your dataset and compute the distance between objects in it. For example if you have functional data use metric.lp(YOUR FD DATA) to acheive this. Finally based on our suggestions in paper chose which depth functions meets your needs the best and insert metric.lp(YOUR FD DATA) as an input in chosen depth function. Now you have found the Most central Object in your dataset!
 
+You can see the more detailed examples in Real Data example Folder in the current repository.
+
 
 ### Authors
 
