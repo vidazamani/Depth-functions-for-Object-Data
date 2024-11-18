@@ -20,7 +20,7 @@ In addition the project contains several helper functions for data generation, c
 
 After calling all necessary libraries, you need to fetch 'All Metric depth function' file by following line in your R script:
 
-`source("YOUR/Path/All Metric depth functions.R")`
+`source("YOUR/PATH/All Metric depth functions.R")`
 
 Next step is to import your dataset and compute the distance between objects in it. For example if you have functional data use metric.lp(YOUR FD DATA) to acheive this. Finally based on our suggestions in paper chose which depth functions meets your needs the best and insert metric.lp(YOUR FD DATA) as an input in chosen depth function. Now you have found the Most central Object in your dataset!
 
