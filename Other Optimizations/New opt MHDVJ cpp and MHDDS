@@ -398,7 +398,7 @@ par_grid <- expand.grid(sample_size = n,
 
 par_n <- nrow(par_grid)
 
-repli = 2
+repli = 500
 temp <- list()
 output <- matrix(0)
 a <- list()
@@ -612,5 +612,5 @@ p3 <- ggplot() +
 stopCluster(cl)
 
 pdf("C:/Users/vizama/Documents/1st paper/Optm MHD Ds VJ.pdf", 6 ,4)
-ggarrange(p1, p_time, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
+ggarrange(p_error, p_time, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
 dev.off()
