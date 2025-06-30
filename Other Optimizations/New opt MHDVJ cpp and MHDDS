@@ -100,8 +100,9 @@ gener_corr_data <- function(p,n,eps,mu){
 #   
 # }
 
-#### instead of function above, the following will be used, as it is implemented 
-#### in C++
+#### instead of function above, the following will be used, 
+#### as it is implemented in C++
+
 
 #MHD_test_cpp(D,D[,1])
 
@@ -121,9 +122,6 @@ vector_to_matrix = function(Cholvec){
   z[upper.tri(z, diag = TRUE)] <- Cholvec
   return(t(z)%*%z)
 }
-
-
-source("C:/Users/vizama/Documents/1st paper/Box_Parallel/Codes/All metric depth functions.R")
 
 
 
@@ -284,7 +282,7 @@ MHDVJ_optim_cpp = function(n, p, eps, mu, tsh){
   # 
   # # Compute the distance matrix between the corr matrices
   D <- CovDist(many_So, method = "AIRM")
-  ordd = order(MHDVJ(D), decreasing = FALSE)
+  ordd = order(MHD_cpp(D), decreasing = FALSE)
   
   Diff[, , 1] <- many_So[,,ordd[n]]
   Diff[, , 2] <- diag(p)
@@ -398,7 +396,7 @@ par_grid <- expand.grid(sample_size = n,
 
 par_n <- nrow(par_grid)
 
-repli = 500
+repli = 2
 temp <- list()
 output <- matrix(0)
 a <- list()
@@ -407,28 +405,37 @@ b_all <- data.frame()
 
 begin <- Sys.time()
 
+
+# clusterEvalQ(cl, set.seed(2222))
+set.seed(1111)
+seed_vec <- sample(1:100000, repli)
+
+
 cl <- makeCluster(8)
 clusterExport(cl, ls(), envir = environment())
 clusterExport(cl, c("rorth","abind", "CovDist", 'ga', 'distcov',
-                    'MHD','nmkb','MHD_cpp', 'MHD_test_cpp'),
+                    'MHD','nmkb','MHD_cpp', 'MHD_test_cpp',
+                    'seed_vec'),
               envir = environment())
 
 
-clusterEvalQ(cl, set.seed(2222))
-set.seed(1111)
-seed_vec <- sample(1:100000, repli)
+
 
 
 
 for (j in 1:repli) {
   
-  set.seed(seed_vec[j])
+  clusterExport(cl, c("rorth","abind", "CovDist", 'ga', 'distcov',
+                      'MHD','nmkb','MHD_cpp', 'MHD_test_cpp',
+                      'seed_vec','j'),
+                envir = environment())
+  
   temp <- parSapply(cl, 1:par_n,
-                    function(i) MHDVJ_optim_cpp(par_grid$sample_size[i],
-                                       par_grid$matrix_dimension[i],
-                                       par_grid$outlier_rate[i],
-                                       par_grid$mean[i],
-                                       par_grid$threshold[i]))
+                    function(i) {set.seed(seed_vec[j]+i);MHDVJ_optim_cpp(par_grid$sample_size[i],
+                                                                         par_grid$matrix_dimension[i],
+                                                                         par_grid$outlier_rate[i],
+                                                                         par_grid$mean[i],
+                                                                         par_grid$threshold[i])})
   
   output <- matrix(unlist(temp), ncol = 1, byrow = TRUE)
   
