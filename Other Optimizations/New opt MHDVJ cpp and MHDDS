@@ -396,7 +396,7 @@ par_grid <- expand.grid(sample_size = n,
 
 par_n <- nrow(par_grid)
 
-repli = 2
+repli = 500
 temp <- list()
 output <- matrix(0)
 a <- list()
@@ -533,9 +533,9 @@ p_error <- ggplot() +
   
   scale_x_continuous(name = "Sample Size") +
   scale_y_continuous(name = "Estimation Error") +
-  theme_bw() + 
+  theme_bw(base_size = 13) + 
   theme(plot.title = element_text(size = 12), 
-        plot.subtitle = element_text(size = 9),
+        plot.subtitle = element_text(size = 11),
         legend.position = "bottom",
         legend.title = element_blank())
 
@@ -587,7 +587,7 @@ p_time <- ggplot(data = data_mhd, aes(x = sample_size)) +
 
 #### Time plot 
 
-p3 <- ggplot() +  
+p_time_nonlog <- ggplot() +  
   geom_line(data = data3, aes(x = sample_size,
                               y = avg_pca_time,
                               linetype = PCA_n,
