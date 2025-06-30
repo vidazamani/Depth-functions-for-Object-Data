@@ -12,7 +12,7 @@ If you're working with complex datasets, such as matrices or images, the followi
 
 ### The main metric functions are:
 
-MLD, MHD, MSD, MOD2, MOD3
+MLD, MHDVJ, MSD, MOD2, MOD3
 
 In addition the project contains several helper functions for data generation, computing p-value for real dataset examples and the simulations performed in the paper.
 
