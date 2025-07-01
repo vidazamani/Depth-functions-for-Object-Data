@@ -491,6 +491,6 @@ p_time_nonlog <- ggplot() +
 
 stopCluster(cl)
 
-pdf("C:/Users/vizama/Documents/1st paper/Optm MHD Ds VJ.pdf", 6 ,4)
+pdf("C:/Users/vizama/Documents/1st paper/new Optm MOD3 cpp.pdf", 6 ,4)
 ggarrange(p_error, p_time, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
 dev.off()
