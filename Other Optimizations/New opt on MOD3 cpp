@@ -1,0 +1,496 @@
+library(ICtest)
+library(shapes)
+library(factoextra)
+library(CovTools)
+library(GA)
+library(abind)
+library(ggplot2)
+library(dplyr)
+library(purrr)
+library(parallel)
+library(dplyr)
+library(viridis)
+library(ggsci)
+library(ggpubr)
+library(MHD)
+library(manifold)
+library(dfoptim)
+library(GenSA)
+library(Rcpp) ## you need to have the latest version of Rcpp
+library(MetricDepth)
+
+# generate data function 
+gener_corr_data <- function(p,n,eps,mu){
+  
+  # Non-outlying sample size
+  n0 <- floor((1 - eps)*n)
+  
+  # Outlying sample size
+  n1 <- n - n0
+  
+  many_S_non_outliers <- replicate(n0, {
+    
+    U <- rorth(p)
+    D <- diag(exp(rnorm(p)))
+    S <- U%*%D%*%t(U)
+    
+    diagS <- diag(S)
+    diag(1/sqrt(diagS))%*%S%*%diag(1/sqrt(diagS))
+    
+  })
+  
+  
+  many_S_outliers <- replicate(n1, {
+    
+    U <- rorth(p)
+    D <- diag(exp(c(rnorm(1, mu), rnorm(p - 1, -mu))))
+    S <- U%*%D%*%t(U)
+    
+    diagS <- diag(S)
+    diag(1/sqrt(diagS))%*%S%*%diag(1/sqrt(diagS))
+    
+    
+  })
+  
+  many_S <- abind(many_S_non_outliers, many_S_outliers)
+  return(many_S)
+}
+
+
+
+# Helper functions
+
+# Converts a correlation matrix into its encoding
+matrix_to_vector = function(CovMatrix){
+  U <- chol(CovMatrix)
+  U[upper.tri(U, diag = TRUE)]
+}
+
+
+# Converts an encoding into a correlation matrix
+vector_to_matrix = function(Cholvec){
+  dim = sqrt(2*length(Cholvec)+(1/4)) - 0.5
+  z = matrix(0,dim,dim)
+  z[upper.tri(z, diag = TRUE)] <- Cholvec
+  return(t(z)%*%z)
+}
+
+
+
+MOD3_optim_cpp = function(n, p, eps, mu, tsh){
+  
+  
+  # generate data
+  many_S <- gener_corr_data(p,n,eps,mu)
+  
+  start_timepca = Sys.time()
+  
+  # Compute the distance matrix between the corr matrices
+  D <- CovDist(many_S, method = "AIRM")
+  
+  # Corresponding encoding length
+  p_enc <- 0.5*p*(p + 1)
+  
+  
+  
+  #### Some auxiliary objects needed by PCA
+  
+  # Encoded training data
+  encoded_train <- matrix(0, n, p_enc)
+  
+  for (i in 1:n) {
+    encoded_train[i, ] <- matrix_to_vector(many_S[, , i])
+  }
+  
+  
+  ###### NEW LINE ####################
+  # Whether we want to center the principal components or not
+  centering <- FALSE
+  
+  # Mean vector of the encoded training data
+  
+  if(centering){
+    mean_vec <- colMeans(encoded_train)
+  }
+  
+  if(!centering){
+    mean_vec <- rep(0, p_enc)
+  }
+  
+  
+  
+  # PCA either with centering or without
+  res.pca <- prcomp(encoded_train, center = centering, scale = FALSE)
+  
+  Expvar <- (res.pca$sdev)**2/(sum(res.pca$sdev**2))
+  
+  # Number of PCs is taken here as a fixed proportion of the encoding length
+  num_pc <- max(2,which((cumsum(Expvar) >= tsh))[1]) ###k
+  
+  # Loadings
+  loading <- res.pca$rotation
+  
+  
+  
+  #### PCA Fitness function
+  # v = the encoded test point in the PCA-space
+  # D = training data distance matrix
+  # many_S = training data as the original correlation matrices
+  
+  test_point_depth = function(v, D, many_S){
+    
+    v_star = as.vector(loading[, 1:num_pc, drop = FALSE]%*%v + mean_vec)
+    
+    CM_test = vector_to_matrix(v_star) 
+    
+    d = c()
+    
+    for (i in 1:dim(many_S)[3]) {
+      d[i] = distcov(many_S[, , i], CM_test)
+    }
+    
+    MOD3_test_cpp(D,d)
+  }
+  
+  # Top 5 in-sample points
+  ord = order(MOD3_cpp(D), decreasing = FALSE)
+  
+  # Matrix of the encoded vectors of the top 5 in-sample solutions
+  suggestedSol <- rbind(matrix_to_vector(many_S[, , ord[n]]),
+                        matrix_to_vector(many_S[, , ord[n - 1]]),
+                        matrix_to_vector(many_S[, , ord[n - 2]]),
+                        matrix_to_vector(many_S[, , ord[n - 3]]),
+                        matrix_to_vector(many_S[, , ord[n - 4]]))
+  
+  # The above converted to the principal components
+  
+  short_sol <- (sweep(suggestedSol, 2, mean_vec, "-"))%*%(loading[, 1:num_pc, drop = FALSE])
+  
+  # The search interval
+  # (HOW SHOULD THIS BE CHOSEN? IS +- 0.5 GOOD?)
+  lower_1 = short_sol[1, 1:num_pc] - 0.5
+  upper_1 = short_sol[1, 1:num_pc] + 0.5
+  
+  
+  # Local optimization using L-BFGS-B
+  start_time_optim <- Sys.time()
+  
+  # --- Optim using L-BFGS-B ---
+  optim_result <- optim(par = short_sol[1, ],
+                        fn = function(x) -test_point_depth(x, D, many_S),
+                        method = "L-BFGS-B",
+                        lower = lower_1,
+                        upper = upper_1)
+  
+  optim_sol <- as.vector(loading[, 1:num_pc, drop = FALSE] %*% optim_result$par + mean_vec)
+  optim_mat <- vector_to_matrix(optim_sol)
+  
+  # Convert to correlation matrix
+  D_optim <- diag(optim_mat)
+  corr_optim <- diag(1/sqrt(D_optim)) %*% optim_mat %*% diag(1/sqrt(D_optim))
+  
+  
+  ## Find the error between the solution found by optimization 
+  ## and the true deepest point
+  
+  Diff_optim <- array(0, dim = c(p, p, 2))
+  Diff_optim[, , 1] <- corr_optim
+  Diff_optim[, , 2] <- diag(p)
+  
+  out_of_sample_error_optim = CovDist(Diff_optim, method = "AIRM")[1,2]
+  end_time_optim <- Sys.time()
+  optim_time = difftime(end_time_optim, start_time_optim, units = 'secs')
+  
+  # --- nmkb optimization ---
+  start_time_nmkb <- Sys.time()
+  
+  nmkb_result <- nmkb(par = short_sol[1, ],
+                      fn = function(x) -test_point_depth(x, D, many_S),
+                      lower = lower_1,
+                      upper = upper_1)
+  
+  nmkb_sol <- as.vector(loading[, 1:num_pc, drop = FALSE] %*% nmkb_result$par + mean_vec)
+  nmkb_mat <- vector_to_matrix(nmkb_sol)
+  
+  # Convert to correlation matrix
+  D_nmkb <- diag(nmkb_mat)
+  corr_nmkb <- diag(1/sqrt(D_nmkb)) %*% nmkb_mat %*% diag(1/sqrt(D_nmkb))
+  
+  Diff_nmkb <- array(0, dim = c(p, p, 2))
+  Diff_nmkb[, , 1] <- corr_nmkb
+  Diff_nmkb[, , 2] <- diag(p)
+  
+  out_of_sample_error_nmkb = CovDist(Diff_nmkb, method = "AIRM")[1,2]
+  end_time_nmkb <- Sys.time()
+  nmkb_time = difftime(end_time_nmkb, start_time_nmkb, units = 'secs')
+  
+  #######  in-sample error for MOD3
+  # set.seed(1234)
+  
+  Diff <- array(0, dim = c(p, p, 2))
+  # 
+  # # generate data
+  many_So <- gener_corr_data(p,n,eps,mu)
+  # 
+  start_timeo = Sys.time()
+  # 
+  # # Compute the distance matrix between the corr matrices
+  D <- CovDist(many_So, method = "AIRM")
+  ordd = order(MOD3_cpp(D), decreasing = FALSE)
+  
+  Diff[, , 1] <- many_So[,,ordd[n]]
+  Diff[, , 2] <- diag(p)
+  
+  in_sample_error = CovDist(Diff, method = "AIRM")[1,2]
+  
+  end_timeo = Sys.time()
+  
+  mod3timein = difftime(end_timeo, start_timeo, units = 'secs')
+  
+  
+  
+ 
+  ########################################
+  
+  return(data.frame(optim_time = optim_time,
+                    nmkb_time = nmkb_time,
+                    Insample_time = mod3timein,
+                    OSE_optim = out_of_sample_error_optim,
+                    OSE_nmkb = out_of_sample_error_nmkb,
+                    ISE_MOD3 = in_sample_error))
+  
+}
+
+######### Parameters 
+
+# Matrix Dimension
+p <- 5
+
+
+# number of random corr matrices
+n <- c(10,20,30,40,50,60)
+# n <- c(10, 20)
+# n <- 10
+
+# How outlying the outliers are
+mu = 3
+
+# Proportion of outliers (To check the robustness of our methods)
+eps = 0.1
+
+tsh <- 0.9
+
+
+
+par_grid <- expand.grid(sample_size = n,
+                        matrix_dimension = p,
+                        outlier_rate = eps, 
+                        mean = mu,
+                        threshold = tsh)
+
+
+par_n <- nrow(par_grid)
+
+repli = 500
+temp <- list()
+output <- matrix(0)
+a <- list()
+b <- data.frame()
+b_all <- data.frame()
+
+begin <- Sys.time()
+
+
+set.seed(1111)
+seed_vec <- sample(1:100000, repli)
+
+
+cl <- makeCluster(8)
+clusterExport(cl, ls(), envir = environment())
+clusterExport(cl, c("rorth","abind", "CovDist", 'ga', 'distcov',
+                    'MHD','nmkb','MOD3_cpp', 'MOD3_test_cpp',
+                    'seed_vec'),
+              envir = environment())
+
+
+
+
+
+
+for (j in 1:repli) {
+  
+  clusterExport(cl, c("rorth","abind", "CovDist", 'ga', 'distcov',
+                      'MHD','nmkb','MOD3_cpp', 'MOD3_test_cpp',
+                      'seed_vec','j'),
+                envir = environment())
+  
+  temp <- parSapply(cl, 1:par_n,
+                    function(i) {set.seed(seed_vec[j]+i);MOD3_optim_cpp(par_grid$sample_size[i],
+                                                                         par_grid$matrix_dimension[i],
+                                                                         par_grid$outlier_rate[i],
+                                                                         par_grid$mean[i],
+                                                                         par_grid$threshold[i])})
+  
+  output <- matrix(unlist(temp), ncol = 1, byrow = TRUE)
+  
+  a = lapply(1:1, function(i) data.frame(
+    par_grid,
+    optim_time = output[seq(1, 6*length(n)*length(tsh), 6), i],
+    nmkb_time  = output[seq(2, 6*length(n)*length(tsh), 6), i],
+    Insample_time = output[seq(3, 6*length(n)*length(tsh), 6), i],
+    OSE_optim  = output[seq(4, 6*length(n)*length(tsh), 6), i],
+    OSE_nmkb   = output[seq(5, 6*length(n)*length(tsh), 6), i],
+    ISE_MOD3 = output[seq(6, 6*length(n)*length(tsh), 6), i]
+  ))
+  
+  b = list_rbind(a)
+  b_all <- rbind(b_all,b)
+  
+}
+
+
+
+
+ending <- Sys.time()
+runningtime <- ending - begin
+
+
+
+# Estimation error summary
+data_error <- b_all %>%
+  group_by(threshold, sample_size) %>%
+  summarise(
+    avg_outof_sample_error_optim = mean(OSE_optim, na.rm = TRUE),
+    avg_outof_sample_error_nmkb  = mean(OSE_nmkb, na.rm = TRUE),
+    avg_in_sample_error_MOD3       = mean(ISE_MOD3, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Time summary
+data_time <- b_all %>%
+  group_by(threshold, sample_size) %>%
+  summarise(
+    avg_optim_time               = mean(optim_time, na.rm = TRUE),
+    avg_nmkb_time                = mean(nmkb_time, na.rm = TRUE),
+    avg_insample_time = mean(Insample_time, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Aggregated time summary
+data_time_agg <- data_time %>%
+  group_by(sample_size) %>%
+  summarise(
+    avg_optim_time               = mean(avg_optim_time, na.rm = TRUE),
+    avg_nmkb_time                = mean(avg_nmkb_time, na.rm = TRUE),
+    avg_insmaple_time = mean(avg_insample_time, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Estimation Error Plot
+p_error <- ggplot() +  
+  # In-sample MOD3
+  geom_line(data = data_error, aes(x = sample_size, y = avg_in_sample_error_MOD3, 
+                              colour = "In-Sample MOD3", linetype = "In-Sample MOD3"),linewidth = 1) +
+  
+  # Out-of-sample Optim
+  geom_line(data = data_error, aes(x = sample_size, y = avg_outof_sample_error_optim, 
+                              colour = "Out-of-Sample Optim", linetype = "Out-of-Sample Optim"),  linewidth = 1) +
+  
+  # Out-of-sample NMKB
+  geom_line(data = data_error, aes(x = sample_size, y = avg_outof_sample_error_nmkb, 
+                              colour = "Out-of-Sample NMKB", linetype = "Out-of-Sample NMKB"),  linewidth = 1) +
+  
+  scale_color_manual(name = NULL,
+                     values = c("In-Sample MOD3" = "black",
+                                "Out-of-Sample Optim" = "red",
+                                "Out-of-Sample NMKB" = "blue")) +
+  
+  scale_linetype_manual(name = NULL,
+                        values = c("In-Sample MOD3" = "solid",
+                                   "Out-of-Sample Optim" = "dotdash",
+                                   "Out-of-Sample NMKB" = "dotted")) +
+  
+  scale_x_continuous(name = "Sample Size") +
+  scale_y_continuous(name = "Estimation Error") +
+  theme_bw(base_size = 13) + 
+  theme(plot.title = element_text(size = 12), 
+        plot.subtitle = element_text(size = 11),
+        legend.position = "bottom",
+        legend.title = element_blank())
+
+
+#### Time plot in logaritmic scale
+
+p_time <- ggplot(data = data_time_agg, aes(x = sample_size)) +
+  geom_line(aes(y = avg_insmaple_time, 
+                color = "In-Sample MOD3",
+                linetype = "In-Sample MOD3"),
+            linewidth = 1) +
+  geom_line(aes(y = avg_optim_time, 
+                color = "Out-of-Sample Optim",
+                linetype = "Out-of-Sample Optim"),
+            linewidth = 1) +
+  geom_line(aes(y = avg_nmkb_time, 
+                color = "Out-of-Sample NMKB",
+                linetype = "Out-of-Sample NMKB"),
+            linewidth = 1) +
+  scale_color_manual(name = "Method",
+                     values = c(
+                       "In-Sample MOD3" = "black",
+                       "Out-of-Sample Optim" = "red",
+                       "Out-of-Sample NMKB" = "blue"
+                     )) +
+  scale_linetype_manual(name = "Method",
+                        values = c(
+                          "In-Sample MOD3" = "solid",
+                          "Out-of-Sample Optim" = "dotdash",
+                          "Out-of-Sample NMKB" = "twodash"
+                        )) +
+  scale_x_continuous(name = "Sample Size") +
+  scale_y_log10(name = "Estimation Time (log scale, seconds)") +
+  theme_bw(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 11),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "gray90")
+  )
+
+#### Time plot 
+
+p_time_nonlog <- ggplot() +  
+  geom_line(data = data3, aes(x = sample_size,
+                              y = avg_pca_time,
+                              linetype = PCA_n,
+                              colour = PCA_n),
+            linewidth = 1) +  
+  geom_line(data = data4, aes(x = sample_size,
+                              y = avg_oja_time,
+                              linetype = 'In-Sample Estimator',
+                              colour = 'In-Sample Estimator'),
+            linewidth = 1)+
+  scale_linetype_manual(values = c("0.25"= "dashed",
+                                   "0.5" = "solid",
+                                   "0.75" = "dotted",
+                                   "In-Sample Estimator" = "dotdash"))+
+  scale_color_manual(values = c("0.25"= "blue",
+                                "0.5" = "green",
+                                "0.75" = "purple",
+                                "In-Sample Estimator" = "red")) +
+  scale_x_continuous(name="Sample Size")+
+  scale_y_continuous(name = 'Estimation time')+
+  theme_bw()+ 
+  theme(plot.title = element_text(size = 12), 
+        plot.subtitle = element_text(size = 9),
+        legend.position="bottom",
+        legend.title = element_blank())
+
+
+
+stopCluster(cl)
+
+pdf("C:/Users/vizama/Documents/1st paper/Optm MHD Ds VJ.pdf", 6 ,4)
+ggarrange(p_error, p_time, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
+dev.off()
