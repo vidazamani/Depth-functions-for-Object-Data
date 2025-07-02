@@ -230,7 +230,7 @@ bagg = b_all %>%
   group_by(method,mean,outlier_rate,matrix_dimension,sample_size) %>% 
   summarise(avg_error = mean(errorD), avg_time = mean(howlong))
 
-dput(bagg,file = "C:\\Users\\vizama\\Documents\\1st paper\\Box_Parallel\\data\\corr_sim_data.txt")
+dput(bagg,file = "C:\\Users\\vizama\\Documents\\1st paper\\Sim on corr cpp results\\Data\\corr_sim_data.txt")
 
 
 
