@@ -244,7 +244,7 @@ duration <-  difftime(endtime, starttime, units = 'days')
 
 ############# Visualization ###############
 
-corr_sim_data <- dget("C:\\Users\\vizama\\Documents\\1st paper\\Box_Parallel\\data\\corr_sim_data.txt")
+corr_sim_data <- dget("C:\\Users\\vizama\\Documents\\1st paper\\Sim on corr cpp results\\Data\\corr_sim_data.txt")
 
 ### 2 * 3 panel
 
