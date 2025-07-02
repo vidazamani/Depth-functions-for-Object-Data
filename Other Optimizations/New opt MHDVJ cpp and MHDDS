@@ -396,7 +396,7 @@ par_grid <- expand.grid(sample_size = n,
 
 par_n <- nrow(par_grid)
 
-repli = 500
+repli = 2
 temp <- list()
 output <- matrix(0)
 a <- list()
@@ -459,11 +459,14 @@ for (j in 1:repli) {
 }
 
 
+dput(b_all,file = "C:\\Users\\vizama\\Documents\\1st paper\\MHD DS VJ Optm results\\Data\\MHDDSVJ data.txt")
+
 
 
 ending <- Sys.time()
 runningtime <- ending - begin
 
+b_all <- dget("C:\\Users\\vizama\\Documents\\1st paper\\MHD DS VJ Optm results\\Data\\MHDDSVJ data.txt")
 
 
 # Estimation error summary
@@ -618,6 +621,8 @@ p_time_nonlog <- ggplot() +
 
 stopCluster(cl)
 
-pdf("C:/Users/vizama/Documents/1st paper/Optm MHD Ds VJ.pdf", 6 ,4)
+
+
+pdf("C:/Users/vizama/Documents/1st paper/MHD DS VJ Optm results/Optm MHD DS VJ.pdf", 8 ,4)
 ggarrange(p_error, p_time, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
 dev.off()
