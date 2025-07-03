@@ -349,11 +349,14 @@ for (j in 1:repli) {
 }
 
 
+dput(b_all,file = "C:\\Users\\vizama\\Documents\\1st paper\\New optim on MOD3 results\\Data\\opt MOD3 data.txt")
+
 
 
 ending <- Sys.time()
 runningtime <- ending - begin
 
+b_all <- dget("C:\\Users\\vizama\\Documents\\1st paper\\New optim on MOD3 results\\Data\\opt MOD3 data.txt")
 
 
 # Estimation error summary
@@ -491,6 +494,6 @@ p_time_nonlog <- ggplot() +
 
 stopCluster(cl)
 
-pdf("C:/Users/vizama/Documents/1st paper/new Optm MOD3 cpp.pdf", 6 ,4)
+pdf("C:\\Users\\vizama\\Documents\\1st paper\\New optim on MOD3 results\\new Optm MOD3 cpp.pdf", 6 ,4)
 ggarrange(p_error, p_time, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
 dev.off()
