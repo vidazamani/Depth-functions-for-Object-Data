@@ -1,0 +1,156 @@
+# merge_and_preview.R
+
+# ─── 0. Setup ─────────────────────────────────────────────────────
+# install.packages(c("dplyr","ggplot2","ggpubr","magick"))  # if needed
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(magick)
+
+# ─── 1. Read & Summarise MOD3 Data ───────────────────────────────
+b_mod3 <- dget("C:/Users/vizama/Documents/1st paper/New optim on MOD3 results/Data/opt MOD3 data.txt")
+
+data_error_mod3 <- b_mod3 %>%
+  group_by(threshold, sample_size) %>%
+  summarise(
+    InSample   = mean(ISE_MOD3, na.rm=TRUE),
+    OutOpt     = mean(OSE_optim, na.rm=TRUE),
+    OutNMKB    = mean(OSE_nmkb,  na.rm=TRUE),
+    .groups="drop"
+  ) %>% mutate(InDS_out = as.double(NA))
+
+data_time_mod3 <- b_mod3 %>%
+  group_by(sample_size) %>%
+  summarise(
+    InSample   = mean(Insample_time, na.rm=TRUE),
+    OutOpt     = mean(optim_time,     na.rm=TRUE),
+    OutNMKB    = mean(nmkb_time,      na.rm=TRUE),
+    .groups="drop"
+  ) %>% mutate(InDS_out = as.double(NA))
+
+p1 <- ggplot(data_error_mod3, aes(sample_size)) +
+  geom_line(aes(y=InSample, colour="In-Sample"),   linetype="solid",   size=1) +
+  geom_line(aes(y=OutOpt,   colour="Out-Opt"),     linetype="dotdash", size=1) +
+  geom_line(aes(y=OutNMKB,  colour="Out-NMKB"),    linetype="dotted",  size=1) +
+  geom_line(aes(y=InDS_out, colour="Out-DS"),   linetype="longdash",size=1) +
+  scale_colour_manual(NULL,
+                      values=c("In-Sample"="black","Out-Opt"="red","Out-NMKB"="blue","Out-DS"="orange"),
+                      drop = FALSE
+  ) +
+  labs(x="Sample Size", y="Estimation Error") +
+  theme_bw(base_size=13) +
+  theme(legend.position="none")
+
+p2 <- ggplot(data_time_mod3, aes(sample_size)) +
+  geom_line(aes(y=InSample,  colour="In-Sample"),   linetype="solid",   size=1) +
+  geom_line(aes(y=OutOpt,    colour="Out-Opt"),     linetype="dotdash", size=1) +
+  geom_line(aes(y=OutNMKB,   colour="Out-NMKB"),    linetype="twodash", size=1) +
+  geom_line(aes(y=InDS_out, colour="Out-DS"),   linetype="longdash",size=1) +
+  scale_colour_manual(NULL,
+                      values=c("In-Sample"="black",
+                               "Out-Opt"="red","Out-NMKB"="blue","Out-DS"="orange"),
+                      drop = FALSE
+  ) +
+  scale_y_log10() +
+  labs(x="Sample Size", y="Estimation Time (log₁₀ seconds)") +
+  theme_bw(base_size=13) +
+  theme(legend.position="none")
+
+# ─── 2. Read & Summarise MHD/DS Data ──────────────────────────────
+b_mhd <- dget("C:/Users/vizama/Documents/1st paper/MHD DS VJ Optm results/Data/MHDDSVJ data.txt")
+
+data_error_mhd <- b_mhd %>%
+  group_by(threshold, sample_size) %>%
+  summarise(
+    InSample   = mean(ISE_DS,   na.rm=TRUE),
+    OutDS      = mean(OSE_DS,   na.rm=TRUE),
+    OutOpt     = mean(OSE_optim,na.rm=TRUE),
+    OutNMKB    = mean(OSE_nmkb, na.rm=TRUE),
+    .groups="drop"
+  )
+
+data_time_mhd <- b_mhd %>%
+  group_by(sample_size) %>%
+  summarise(
+    InDS_in    = mean(VJtime_in,   na.rm=TRUE),
+    InDS_out   = mean(DStime_out,   na.rm=TRUE),
+    OutOpt     = mean(optim_time,   na.rm=TRUE),
+    OutNMKB    = mean(nmkb_time,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+p3 <- ggplot(data_error_mhd, aes(sample_size)) +
+  geom_line(aes(y=InSample, colour="In-DS"),    linetype="solid",   size=1) +
+  geom_line(aes(y=OutDS,    colour="Out-DS"),   linetype="longdash",size=1) +
+  geom_line(aes(y=OutOpt,   colour="Out-Opt"),  linetype="dotdash", size=1) +
+  geom_line(aes(y=OutNMKB,  colour="Out-NMKB"), linetype="dotted",  size=1) +
+  scale_colour_manual(NULL,
+                      values=c("In-DS"="black","Out-DS"="orange",
+                               "Out-Opt"="red","Out-NMKB"="blue"), drop = FALSE
+  ) +
+  labs(x="Sample Size", y="Estimation Error") +
+  theme_bw(base_size=13) +
+  theme(legend.position="none")
+
+p4 <- ggplot(data_time_mhd, aes(sample_size)) +
+  geom_line(aes(y=InDS_in,  colour="In-DS"),    linetype="solid",  size=1) +
+  geom_line(aes(y=InDS_out, colour="Out-DS"),   linetype="longdash",size=1) +
+  geom_line(aes(y=OutOpt,   colour="Out-Opt"),  linetype="dotdash", size=1) +
+  geom_line(aes(y=OutNMKB,  colour="Out-NMKB"), linetype="twodash", size=1) +
+  scale_colour_manual(NULL,
+                      values=c("In-DS"="black","Out-DS"="orange",
+                               "Out-Opt"="red","Out-NMKB"="blue"), drop = FALSE
+  ) +
+  scale_y_log10() +
+  labs(x="Sample Size", y="Estimation Time (log₁₀ seconds)") +
+  theme_bw(base_size=13) +
+  theme(legend.position="bottom")
+
+
+
+
+
+# ─── 3. Arrange & Save Merged Figure ──────────────────────────────
+merged <- ggarrange(
+  p1, p3, p2, p4,
+  ncol=2, nrow=2,
+  labels=c("MOD3","MHD","",""),
+  common.legend=TRUE, legend="bottom",
+  label.x   = c(0.5,    0.5,    NA,   NA),
+  label.y   = c(1.02,   1.02,  NA,   NA)
+)
+
+
+ggarrange(
+  p1, p3, p2, p4,
+  ncol = 2, nrow = 2,
+  labels = c("MOD3", "MHD", "", ""),
+  common.legend = TRUE,
+  legend = "bottom",
+  label.x = c(0.5, 0.5, NA, NA),   # centered
+  label.y = c(0.99, 0.99, NA, NA)  # just below top edge
+)
+
+
+
+
+
+
+
+
+
+ggsave("merged_figure.pdf", merged, width=8, height=8)
+
+# ─── 4. Preview the original PDFs side-by-side ───────────────────
+mod3_pdf <- image_read_pdf("C:/Users/vizama/Documents/1st paper/New optim on MOD3 results/new Optm MOD3 cpp.pdf", density=150)
+mhd_pdf  <- image_read_pdf("C:/Users/vizama/Documents/1st paper/MHD DS VJ Optm results/Optm MHD DS VJ.pdf", density=150)
+
+# grab first page of each
+img1 <- mod3_pdf[[1]]
+img2 <- mhd_pdf[[1]]
+
+side_by_side <- image_append(c(img1, img2))
+image_write(side_by_side, path="preview_side_by_side.png")
+image_write(side_by_side, path="preview_side_by_side.pdf", format="pdf")
+
+message("All done! See 'merged_figure.pdf' and the previews.")
