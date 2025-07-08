@@ -8,7 +8,6 @@ b_mod3 <- dget("C:/Users/vizama/Documents/1st paper/New optim on MOD3 results/Da
 b_mhd  <- dget("C:/Users/vizama/Documents/1st paper/MHD DS VJ Optm results/Data/MHDDSVJ data.txt") %>%
   mutate(dataset = "DLP")
 
-head(b_mhd,2)
 
 
 mod3 <- b_mod3 %>%
@@ -21,7 +20,6 @@ mod3 <- b_mod3 %>%
   ) %>%
   mutate(dataset = "MOD3")
 
-head(mod3,1)
 
 # 3) Standardize columns for MHD/DS (DLP)
 mhd <- b_mhd %>%
@@ -37,7 +35,7 @@ mhd <- b_mhd %>%
   ) %>%
   mutate(dataset = "MHD") 
 
-head(mhd,1)
+# head(mhd,1)
 
 
 
@@ -46,7 +44,7 @@ head(mhd,1)
 # 2) Combine into one data frame
 combined <- bind_rows(mhd, mod3)
 
-head(combined,2)
+# head(combined,2)
 
 # 2) Summarise means by dataset & sample_size
 summary_df <- combined %>%
@@ -79,6 +77,21 @@ series_cols <- c(
   "Out-of-Sample NMKB (MHD)"      = "darkblue",
   "Out-of-Sample DLP"             = "orange"
 )
+
+
+
+
+label <- c(
+  "In-Sample MOD3"                = "MOD3",
+  "In-Sample MHD"                 = "MHD",
+  "Out-of-Sample L-BFGS-B (MOD3)" = "L-BFGS-B (MOD3)",
+  "Out-of-Sample L-BFGS-B (MHD)"  = "L-BFGS-B (MHD)",
+  "Out-of-Sample NMKB (MOD3)"     = "NMKB (MOD3)",
+  "Out-of-Sample NMKB (MHD)"      = "NMKB (MHD)",
+  "Out-of-Sample DLP"             = "DLP (MHD)"
+)
+
+
 sample_ltys <- c("In-Sample"="solid","Out-of-Sample"="twodash")
 
 # 4) Plot Estimation Error
@@ -106,9 +119,9 @@ p_error <- ggplot(summary_df, aes(x=sample_size)) +
             linewidth=1) +
   # Out-of-sample DLP
   geom_line(data=filter(summary_df, dataset=="MHD"),
-            aes(y=mean_OSE_DLP,      colour="Out-of-Sample DLP",       linetype="Out-of-Sample"),
+            aes(y=mean_OSE_DLP,      colour="Out-of-Sample DLP", linetype="Out-of-Sample"),
             linewidth=1) +
-  scale_colour_manual(name="Series", values=series_cols) +
+  scale_colour_manual(labels = label, values=series_cols) +
   scale_linetype_manual(name="Sample Type", values=sample_ltys) +
   labs(x="Sample Size", y="Estimation Error") +
   guides(
@@ -156,14 +169,13 @@ p_time <- ggplot(summary_df, aes(x=sample_size)) +
             aes(y=mean_Time_out_DLP,    colour="Out-of-Sample DLP",       linetype="Out-of-Sample"),
             linewidth=1) +
   scale_y_log10() +
-  scale_colour_manual(name="Series", values=series_cols) +
+  scale_colour_manual(labels = label, values=series_cols) +
   scale_linetype_manual(name="Sample Type", values=sample_ltys) +
-  labs(x="Sample Size", y="Estimation Time (log?????? seconds)") +
-  theme_bw(base_size=13) +
-  theme(legend.position="bottom")
+  labs(x="Sample Size", y="Estimation Time (log, in seconds)") +
+  theme_bw(base_size=13) 
 
 
-pdf("C:/Users/vizama/Documents/1st paper/Optm MHD Ds VJ.pdf", 6 ,4)
+pdf("C:/Users/vizama/Documents/1st paper/MOD3 MHD comparison/MOD3 MHD compare.pdf", 10 ,5)
 ggarrange(p_error, p_time, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
 dev.off()
 
