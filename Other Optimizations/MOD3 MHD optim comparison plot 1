@@ -1,0 +1,169 @@
+# 0) Libraries
+library(dplyr)
+library(tidyr)
+
+# 1) Read raw data, add a dataset label
+b_mod3 <- dget("C:/Users/vizama/Documents/1st paper/New optim on MOD3 results/Data/opt MOD3 data.txt") %>%
+  mutate(dataset = "MOD3")
+b_mhd  <- dget("C:/Users/vizama/Documents/1st paper/MHD DS VJ Optm results/Data/MHDDSVJ data.txt") %>%
+  mutate(dataset = "DLP")
+
+head(b_mhd,2)
+
+
+mod3 <- b_mod3 %>%
+  rename(
+    OSE_LFBGS_MOD3    = OSE_optim,
+    OSE_nmkb_MOD3 = OSE_nmkb,
+    Time_in_MOD3    = Insample_time,
+    Time_LFBGS_MOD3   = optim_time,
+    Time_nmkb_MOD3    = nmkb_time
+  ) %>%
+  mutate(dataset = "MOD3")
+
+head(mod3,1)
+
+# 3) Standardize columns for MHD/DS (DLP)
+mhd <- b_mhd %>%
+  rename(
+    OSE_LFBGS_MHD       = OSE_optim,
+    Time_in_MHD       = DStime_in,
+    Time_out_DLP   = DStime_out,
+    Time_out_LFBGS      = optim_time,
+    Time_out_nmkb       = nmkb_time,
+    OSE_DLP_MHD = OSE_DS,
+    ISE_MHD = ISE_DS,
+    OSE_NMKB_MHD = OSE_nmkb
+  ) %>%
+  mutate(dataset = "MHD") 
+
+head(mhd,1)
+
+
+
+
+
+# 2) Combine into one data frame
+combined <- bind_rows(mhd, mod3)
+
+head(combined,2)
+
+# 2) Summarise means by dataset & sample_size
+summary_df <- combined %>%
+  group_by(dataset, sample_size) %>%
+  summarise(
+    mean_ISE_MOD3       = mean(ISE_MOD3,        na.rm=TRUE),
+    mean_ISE_MHD        = mean(ISE_MHD,         na.rm=TRUE),
+    mean_OSE_LFBGS_MOD3 = mean(OSE_LFBGS_MOD3,  na.rm=TRUE),
+    mean_OSE_LFBGS_MHD  = mean(OSE_LFBGS_MHD,   na.rm=TRUE),
+    mean_OSE_nmkb_MOD3  = mean(OSE_nmkb_MOD3,   na.rm=TRUE),
+    mean_OSE_NMKB_MHD   = mean(OSE_NMKB_MHD,    na.rm=TRUE),
+    mean_OSE_DLP        = mean(OSE_DLP_MHD,     na.rm=TRUE),
+    mean_Time_in_MOD3   = mean(Time_in_MOD3,    na.rm=TRUE),
+    mean_Time_in_MHD    = mean(Time_in_MHD,     na.rm=TRUE),
+    mean_Time_LFBGS_MOD3= mean(Time_LFBGS_MOD3, na.rm=TRUE),
+    mean_Time_out_LFBGS = mean(Time_out_LFBGS,  na.rm=TRUE),
+    mean_Time_nmkb_MOD3 = mean(Time_nmkb_MOD3,  na.rm=TRUE),
+    mean_Time_out_nmkb  = mean(Time_out_nmkb,   na.rm=TRUE),
+    mean_Time_out_DLP   = mean(Time_out_DLP,    na.rm=TRUE),
+    .groups="drop"
+  )
+
+# 3) Aesthetic mappings
+series_cols <- c(
+  "In-Sample MOD3"                = "black",
+  "In-Sample MHD"                 = "darkgreen",
+  "Out-of-Sample L-BFGS-B (MOD3)" = "red",
+  "Out-of-Sample L-BFGS-B (MHD)"  = "darkred",
+  "Out-of-Sample NMKB (MOD3)"     = "blue",
+  "Out-of-Sample NMKB (MHD)"      = "darkblue",
+  "Out-of-Sample DLP"             = "orange"
+)
+sample_ltys <- c("In-Sample"="solid","Out-of-Sample"="twodash")
+
+# 4) Plot Estimation Error
+p_error <- ggplot(summary_df, aes(x=sample_size)) +
+  # In-sample
+  geom_line(data=filter(summary_df, dataset=="MOD3"),
+            aes(y=mean_ISE_MOD3, colour="In-Sample MOD3", linetype="In-Sample"),
+            linewidth=1) +
+  geom_line(data=filter(summary_df, dataset=="MHD"),
+            aes(y=mean_ISE_MHD,  colour="In-Sample MHD",  linetype="In-Sample"),
+            linewidth=1) +
+  # Out-of-sample L-BFGS-B
+  geom_line(data=filter(summary_df, dataset=="MOD3"),
+            aes(y=mean_OSE_LFBGS_MOD3, colour="Out-of-Sample L-BFGS-B (MOD3)", linetype="Out-of-Sample"),
+            linewidth=1) +
+  geom_line(data=filter(summary_df, dataset=="MHD"),
+            aes(y=mean_OSE_LFBGS_MHD,  colour="Out-of-Sample L-BFGS-B (MHD)",  linetype="Out-of-Sample"),
+            linewidth=1) +
+  # Out-of-sample NMKB
+  geom_line(data=filter(summary_df, dataset=="MOD3"),
+            aes(y=mean_OSE_nmkb_MOD3, colour="Out-of-Sample NMKB (MOD3)", linetype="Out-of-Sample"),
+            linewidth=1) +
+  geom_line(data=filter(summary_df, dataset=="MHD"),
+            aes(y=mean_OSE_NMKB_MHD,  colour="Out-of-Sample NMKB (MHD)",  linetype="Out-of-Sample"),
+            linewidth=1) +
+  # Out-of-sample DLP
+  geom_line(data=filter(summary_df, dataset=="MHD"),
+            aes(y=mean_OSE_DLP,      colour="Out-of-Sample DLP",       linetype="Out-of-Sample"),
+            linewidth=1) +
+  scale_colour_manual(name="Series", values=series_cols) +
+  scale_linetype_manual(name="Sample Type", values=sample_ltys) +
+  labs(x="Sample Size", y="Estimation Error") +
+  guides(
+    colour     = guide_legend(nrow=2, byrow=TRUE, title=NULL,
+                              override.aes=list(linetype="solid", size=2)),
+    linetype   = guide_legend(nrow=1, title=NULL,
+                              override.aes=list(colour="black"))
+  ) +
+  theme_bw(base_size=13) +
+  theme(
+    legend.position   = "bottom",
+    legend.box        = "vertical",
+    legend.spacing.y  = unit(0.1, "cm"),
+    legend.key.width  = unit(1.5, "cm"),
+    legend.text       = element_text(size=9)
+  )
+
+
+
+# 5) Plot Estimation Time (log?????? scale)
+p_time <- ggplot(summary_df, aes(x=sample_size)) +
+  # In-sample
+  geom_line(data=filter(summary_df, dataset=="MOD3"),
+            aes(y=mean_Time_in_MOD3, colour="In-Sample MOD3", linetype="In-Sample"),
+            linewidth=1) +
+  geom_line(data=filter(summary_df, dataset=="MHD"),
+            aes(y=mean_Time_in_MHD,  colour="In-Sample MHD",  linetype="In-Sample"),
+            linewidth=1) +
+  # Out-of-sample L-BFGS-B
+  geom_line(data=filter(summary_df, dataset=="MOD3"),
+            aes(y=mean_Time_LFBGS_MOD3, colour="Out-of-Sample L-BFGS-B (MOD3)", linetype="Out-of-Sample"),
+            linewidth=1) +
+  geom_line(data=filter(summary_df, dataset=="MHD"),
+            aes(y=mean_Time_out_LFBGS,   colour="Out-of-Sample L-BFGS-B (MHD)",  linetype="Out-of-Sample"),
+            linewidth=1) +
+  # Out-of-sample NMKB
+  geom_line(data=filter(summary_df, dataset=="MOD3"),
+            aes(y=mean_Time_nmkb_MOD3, colour="Out-of-Sample NMKB (MOD3)", linetype="Out-of-Sample"),
+            linewidth=1) +
+  geom_line(data=filter(summary_df, dataset=="MHD"),
+            aes(y=mean_Time_out_nmkb,   colour="Out-of-Sample NMKB (MHD)",  linetype="Out-of-Sample"),
+            linewidth=1) +
+  # Out-of-sample DLP
+  geom_line(data=filter(summary_df, dataset=="MHD"),
+            aes(y=mean_Time_out_DLP,    colour="Out-of-Sample DLP",       linetype="Out-of-Sample"),
+            linewidth=1) +
+  scale_y_log10() +
+  scale_colour_manual(name="Series", values=series_cols) +
+  scale_linetype_manual(name="Sample Type", values=sample_ltys) +
+  labs(x="Sample Size", y="Estimation Time (log?????? seconds)") +
+  theme_bw(base_size=13) +
+  theme(legend.position="bottom")
+
+
+pdf("C:/Users/vizama/Documents/1st paper/Optm MHD Ds VJ.pdf", 6 ,4)
+ggarrange(p_error, p_time, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
+dev.off()
+
