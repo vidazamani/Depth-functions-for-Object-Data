@@ -1,0 +1,483 @@
+library(HistDAWass)
+library(tidyr)
+library(Rcpp) ## you need to have the latest version of Rcpp
+library(MetricDepth)
+library(ggpattern) 
+library(patchwork)
+library(ggpubr)
+
+
+Age_Pyramids_2014
+
+
+# Pull out the M matrix of distributionH objects
+M <- attr(Age_Pyramids_2014, "M")
+countries <- rownames(M)
+
+# Create a data frame with every country and its index
+df_regions <- data.frame(
+  country = countries,
+  index   = seq_along(countries),
+  stringsAsFactors = FALSE
+)
+
+
+# 2. Define Factbook subregion vectors
+western     <- c("Austria","Belgium","France","Germany",
+                 "Liechtenstein","Luxembourg","Monaco",
+                 "Netherlands","Switzerland", 'Ireland','United Kingdom')
+
+
+southwest   <- c("Portugal","Spain",'Andorra')  
+
+
+southern    <- c("Italy","Malta",'Greece',
+                 "San Marino","Vatican City")
+
+
+northern    <- c("Denmark","Finland","Iceland",
+                 "Norway","Sweden","United Kingdom", 'Faroe Islands',
+                 'Jan Mayen',
+                 'Svalbard')
+
+
+central     <- c("Czech Republic","Hungary","Poland",
+                 "Slovakia","Slovenia")
+
+
+southeastern<- c("Albania","Bosnia and Herzegovina",
+                 "Bulgaria","Croatia",
+                 "Montenegro","North Macedonia","Romania",
+                 "Serbia","Slovenia")
+
+eastern     <- c("Belarus","Moldova",
+                 "Romania","Russia","Ukraine")
+
+# 3. Build the two merged groups
+group_west <- unique(c(western, northern, southern, southwest))
+group_east <- unique(c(eastern, southeastern, central))
+
+
+# Find matching indices
+idx_east <- which(countries %in% group_east)
+idx_west <- which(countries %in% group_west)
+
+
+# Build lookup table
+df_eastern <- data.frame(
+  country = countries[idx_east],
+  index   = idx_east,
+  stringsAsFactors = FALSE
+)
+
+
+df_western <- data.frame(
+  country = countries[idx_west],
+  index   = idx_west,
+  stringsAsFactors = FALSE
+)
+
+
+df_europe <- rbind(df_eastern,df_western)
+
+
+
+
+#### Put Eastern_index or Western_index as a group input
+
+compute_wass_matrix <- function(hist_data,group) {
+  n <- length(group) 
+  dist_matrix <- matrix(0, n, n)
+  for (i in 1:(n - 1)) {
+    for (j in (i + 1):n) {
+      d <- WassSqDistH(hist_data[group[i]]@M[[1]],
+                       hist_data[group[j]]@M[[1]])
+      dist_matrix[i, j] <- d
+      dist_matrix[j, i] <- d
+    }
+  }
+  return(dist_matrix)
+}
+
+###### Examples shwoing how to use the function above 
+
+# Distance matrix for each group
+# dist_mat_eastern <- compute_wass_matrix(Age_Pyramids_2014,idx_east)
+# dist_mat_western <- compute_wass_matrix(Age_Pyramids_2014,idx_west)
+# 
+# 
+# # Deepest object find by depths functions
+# ordes <- order(MSD_cpp(dist_mat_eastern),decreasing = TRUE)[1]
+# deepestES <- df_regions[df_regions$index == idx_east[ordes],1]
+# deepestEShist <- Age_Pyramids_2014[idx_east[ordes]]@M[[1]]
+# 
+# ordws <- order(MSD_cpp(dist_mat_western),decreasing = TRUE)[1]
+# deepestWS <- df_regions[df_regions$index == idx_west[ordws],1]
+# deepestWShist <- Age_Pyramids_2014[idx_west[ordws]]@M[[1]]
+
+
+
+
+
+pvalue_age_hist <- function(iter, depth_fun) {
+  
+  distribution=c()
+  
+  for (i in 1:iter) {
+    
+    fake_labels <- sample(c(rep("es",16),rep("ws",24)), 40, replace = FALSE)
+    
+    east_fake <- df_europe$index[fake_labels %in% c("es")]
+    
+    west_fake <- df_europe$index[fake_labels %in% c("ws")]
+    
+    
+    ###### Computing Distance for fake indices 
+    
+    dist_mat_eastern_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(east_fake))
+    dist_mat_western_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(west_fake))
+    
+    #Difference in means
+    
+    ordes <- order(MSD_cpp(dist_mat_eastern_fake),decreasing = TRUE)[1]
+    deepestEShist <- Age_Pyramids_2014[idx_east[ordes]]@M[[1]]
+    
+    
+    
+    ordws <- order(MSD_cpp(dist_mat_western_fake),decreasing = TRUE)[1]
+    deepestWShist <- Age_Pyramids_2014[idx_west[ordws]]@M[[1]]
+    
+
+    
+    distribution[i] <- WassSqDistH(deepestEShist,deepestWShist)
+    
+    
+  }
+  
+  #Difference in means for real observed data
+  
+  dist_mat_eastern <- compute_wass_matrix(Age_Pyramids_2014,idx_east)
+  dist_mat_western <- compute_wass_matrix(Age_Pyramids_2014,idx_west)
+  
+
+  
+  ordes_r <- order(depth_fun(dist_mat_eastern),decreasing = TRUE)[1]
+
+  ordws_r <- order(depth_fun(dist_mat_western),decreasing = TRUE)[1]
+
+  observed <- WassSqDistH(Age_Pyramids_2014[idx_east[ordes_r]]@M[[1]],
+                          Age_Pyramids_2014[idx_west[ordws_r]]@M[[1]])
+  
+  
+  
+  pvalue <- sum(abs(distribution) >= abs(c(observed)))/(iter)
+  
+  return(pvalue)
+  
+}
+
+
+start_time <- Sys.time()
+set.seed(2222)
+
+
+##### Parameters 
+
+iter = 5000
+
+model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
+models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
+
+
+combinations <- expand.grid(ModelName = model_names,
+                            stringsAsFactors = FALSE)
+
+
+# Apply the function for each combination and store the results in a data frame
+results_df <- do.call(rbind, lapply(1:nrow(combinations), function(i) {
+  model <- models[[which(model_names == combinations$ModelName[i])]]
+  data.frame(Model = combinations$ModelName[i], PValue = pvalue_age_hist(iter, model))
+}))
+
+# Print the final results
+print(results_df)
+
+
+end_time <- Sys.time()
+
+running_time <- end_time-start_time
+
+
+
+
+
+
+
+
+
+
+
+#################### Reverse #######################
+
+
+pvalue_agehist_rev <- function(iter, depth_fun, n_reverse) {
+  
+  
+  df_eastern_rev <- df_eastern$country
+  df_western_rev <- df_western$country
+  
+  
+  idx_east_rev <- sample(length(df_eastern_rev), n_reverse)
+  
+  # Perform the swap
+  temp <- df_eastern_rev[idx_east_rev]
+  df_eastern_rev[idx_east_rev] <- df_western_rev[idx_east_rev]
+  df_western_rev[idx_east_rev] <- temp
+  
+  
+  df_es_rev <- df_eastern
+  df_es_rev$country = df_eastern_rev
+  
+  
+  df_ws_rev <- df_western
+  df_ws_rev$country <- df_western_rev
+  
+  
+  
+  distribution <- c()
+  
+  
+  for (i in 1:iter) {
+    
+    fake_labels <- sample(c(rep("es",length(df_eastern_rev)),
+                            rep("ws",length(df_western_rev))), 40, replace = FALSE)
+    
+    
+    east_fake <- df_europe$index[fake_labels %in% c("es")]
+    
+    west_fake <- df_europe$index[fake_labels %in% c("ws")]
+    
+    
+    ###### Computing Distance for fake indices 
+    
+    dist_mat_eastern_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(east_fake))
+    dist_mat_western_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(west_fake))
+    
+    #Difference in means
+    
+    ordes <- order(MSD_cpp(dist_mat_eastern_fake),decreasing = TRUE)[1]
+    deepestEShist <- Age_Pyramids_2014[idx_east[ordes]]@M[[1]]
+    
+    
+    
+    ordws <- order(MSD_cpp(dist_mat_western_fake),decreasing = TRUE)[1]
+    deepestWShist <- Age_Pyramids_2014[idx_west[ordws]]@M[[1]]
+    
+    
+    
+    distribution[i] <- WassSqDistH(deepestEShist,deepestWShist)
+    
+    
+  }
+    
+    
+  
+  #Difference in means for real observed data
+  
+  dist_mat_eastern <- compute_wass_matrix(Age_Pyramids_2014,df_es_rev$index)
+  dist_mat_western <- compute_wass_matrix(Age_Pyramids_2014,df_ws_rev$index)
+  
+  
+  
+  ordes_r <- order(depth_fun(dist_mat_eastern),decreasing = TRUE)[1]
+  
+  ordws_r <- order(depth_fun(dist_mat_western),decreasing = TRUE)[1]
+  
+  observed <- WassSqDistH(Age_Pyramids_2014[df_es_rev$index[ordes_r]]@M[[1]],
+                          Age_Pyramids_2014[df_ws_rev$index[ordws_r]]@M[[1]])
+  
+  
+  pvalue <- sum(abs(distribution) >= abs(c(observed)))/(iter)
+  
+  return(pvalue)
+  
+}
+
+
+start_time <- Sys.time()
+set.seed(2222)
+
+
+##### Parameters for 7 swaps
+
+iter = 5000
+n_reverse <- 7
+
+
+model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
+models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
+
+
+combinations <- expand.grid(ModelName = model_names,
+                            stringsAsFactors = FALSE)
+
+
+# Apply the function for each combination and store the results in a data frame
+results_df_7 <- do.call(rbind, lapply(1:nrow(combinations), function(i) {
+  model <- models[[which(model_names == combinations$ModelName[i])]]
+  data.frame(Model = combinations$ModelName[i],
+             PValue = pvalue_agehist_rev(iter, model,n_reverse))
+}))
+
+# Print the final results
+print(results_df_7)
+
+
+end_time <- Sys.time()
+
+running_time <- end_time-start_time
+
+
+##### Parameters for 12 swaps
+
+
+iter = 5000
+n_reverse <- 12
+
+
+model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
+models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
+
+
+combinations <- expand.grid(ModelName = model_names,
+                            stringsAsFactors = FALSE)
+
+
+# Apply the function for each combination and store the results in a data frame
+results_df_12 <- do.call(rbind, lapply(1:nrow(combinations), function(i) {
+  model <- models[[which(model_names == combinations$ModelName[i])]]
+  data.frame(Model = combinations$ModelName[i],
+             PValue = pvalue_agehist_rev(iter, model,n_reverse))
+}))
+
+# Print the final results
+print(results_df_12)
+
+
+end_time <- Sys.time()
+
+running_time <- end_time-start_time
+
+
+My_Theme = theme(
+  axis.title.x = element_text(size = 16),
+  axis.text.x = element_text(size = 8),
+  axis.title.y = element_text(size = 12))
+
+
+
+p1 = ggplot(results_df, aes(x = Model, y = PValue, fill = Model)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste('depth function')),
+       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(1, "cm"),
+        legend.text=element_text(size=11),
+        strip.text.x = element_text(size = 25, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 25, 
+                                    colour = "black",
+                                    angle = 90),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_hline(yintercept=0.05, linetype="dashed", color = "blue",
+             linewidth=1)+ My_Theme+ 
+  scale_x_discrete(labels = c('0' = expression(infinity)))
+
+
+p2 = ggplot(results_df_7, aes(x = Model, y = PValue, fill = Model)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste('depth function')),
+       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(1, "cm"),
+        legend.text=element_text(size=11),
+        strip.text.x = element_text(size = 25, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 25, 
+                                    colour = "black",
+                                    angle = 90),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_hline(yintercept=0.05, linetype="dashed", color = "blue",
+             linewidth=1)+ My_Theme+ 
+  scale_x_discrete(labels = c('0' = expression(infinity)))
+
+
+
+p3 = ggplot(results_df_12, aes(x = Model, y = PValue, fill = Model)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste('depth function')),
+       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(1, "cm"),
+        legend.text=element_text(size=11),
+        strip.text.x = element_text(size = 25, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 25, 
+                                    colour = "black",
+                                    angle = 90),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_hline(yintercept=0.05, linetype="dashed", color = "blue",
+             linewidth=1)+ My_Theme+ 
+  scale_x_discrete(labels = c('0' = expression(infinity)))
+
+
+
+
+pdf("C:/Users/vizama/Documents/1st paper/Real data Example/reversed and original.pdf", 10 ,6)
+ggarrange(p1, p2, p3, ncol=3, nrow=1, common.legend = TRUE, legend="bottom")
+dev.off()
+
+
+
+
+
+
+
+
+
