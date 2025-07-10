@@ -1,4 +1,4 @@
-# Oja-paper distance computation simulation
+# Oja-paper large p simulation
 
 
 library(tidyverse)
@@ -72,19 +72,20 @@ single_simu <- function(n, p){
 
 
 # Batches 1-5: n = 100
-# Batch 6: n = 150
-# Batch 7: n = 200
+# Batches 7-11: n = 200
 # Always 20 reps per batch
 
-# Next up: batch 11
-# Batch 11 run with set.seed(30111988 + batch - 1 + 100)
+# Batch 11 run with set.seed(30111988 + batch - 1 + 100) instead of the one below
 
+# I.e., total of 10 batches
+
+                  
 n <- 200
 p_set <- c(50, 100, 200, 400, 800, 1600)
 
 reps_per_set <- 20
 
-batch <- 11
+batch <- 1
 
 set.seed(30111988 + batch - 1)
 res <- NULL
