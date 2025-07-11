@@ -12,7 +12,7 @@ If you're working with complex datasets, such as matrices or images, the followi
 
 ### The main metric depth functions are:
 
-MLD_cpp, MHDVJ_cpp, MSD_cpp, MOD2_cpp, MOD3_cpp,
+MLD_cpp, MHD_cpp, MSD_cpp, MOD2_cpp, MOD3_cpp,
 
 coded in Rcpp. To use them you need to install from source the R-package MetricDepth_1.1 in the subfolder [**All Metric depth function in C++**](https://github.com/vidazamani/Depth-functions-for-Object-Data/tree/main/All%20Metric%20depth%20function%20in%20C%2B%2B).
 
