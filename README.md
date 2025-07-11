@@ -18,15 +18,18 @@ coded in Rcpp. To use them you need to install from source the R-package MetricD
 
 In addition the project contains several helper functions for data generation, computing p-value for real dataset examples and the simulations performed in the paper.
 
-### Great! Then How to Use this Project!
+### Replicating the examples in the paper
 
-After calling all necessary libraries, you need to fetch 'All Metric depth function' file by following line in your R script:
+The following list shows which files can be used to replicate which simulation study in the manuscript:
 
-`source("YOUR/PATH/All Metric depth functions.R")`
 
-Next step is to import your dataset and compute the distance between objects in it. For example if you have functional data use metric.lp(YOUR FD DATA) to acheive this. Finally based on our suggestions in paper choose which depth functions meets your needs the best and insert metric.lp(YOUR FD DATA) as an input in chosen depth function. Now you have found the Most central Object in your dataset!
+### Great! Then How to Use this Project for my own data?
+
+After calling all necessary libraries, and installing MetricDepth_1.1, the next step is to import your dataset and compute the distance between objects in it. For example if you have functional data use metric.lp(YOUR FD DATA) to achieve this. Finally based on our suggestions in paper choose which depth functions meets your needs the best and use your computed distance matrix as an input in chosen depth function, e.g., MOD3_cpp. Now you have found the depths and, among them, the Most central Object in your dataset!
 
 You can see the more detailed examples in [**Real Data example**](https://github.com/vidazamani/Depth-functions-for-Object-Data/tree/15c63bb935e6261f982a280901ab1a48eae834b9/Real%20data%20examples) Folder in the current repository.
+
+
 
 
 ### Authors
