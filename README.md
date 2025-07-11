@@ -14,7 +14,7 @@ If you're working with complex datasets, such as matrices or images, the followi
 
 MLD_cpp, MHDVJ_cpp, MSD_cpp, MOD2_cpp, MOD3_cpp,
 
-coded in Rcpp. To use them you need to install from source the R-package metricDepth in the subfolder "All Metric depth function in C++".
+coded in Rcpp. To use them you need to install from source the R-package MetricDepth_1.1 in the subfolder "All Metric depth function in C++".
 
 In addition the project contains several helper functions for data generation, computing p-value for real dataset examples and the simulations performed in the paper.
 
