@@ -78,10 +78,35 @@ df_western <- data.frame(
 )
 
 
+
+
 df_europe <- rbind(df_eastern,df_western)
+idx_europe <- df_europe$index
+
+############### African
+
+african_countries <- c(
+  "Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cameroon",
+  "Central African Republic", "Chad", "Comoros", "Congo (Brazzaville)", 
+  "Congo (Kinshasa)", "Cote d'Ivoire", "Djibouti", "Egypt", "Equatorial Guinea", "Eritrea", 
+  "Swaziland", "Ethiopia", "Gabon", "Gambia, The", "Ghana", "Guinea", "Guinea-Bissau", "Kenya",
+  "Lesotho", "Liberia", "Libya", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius",
+  "Morocco", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda",
+  "Saint Helena", "Sao Tome and Principe", "Senegal", "Seychelles",
+  "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", "Tanzania", "Togo", 
+  "Tunisia", "Uganda", "Zambia", "Zimbabwe"
+)
 
 
 
+idx_african <- which(countries %in% african_countries)
+
+
+df_african <- data.frame(
+  country = countries[idx_african],
+  index   = idx_african,
+  stringsAsFactors = FALSE
+)
 
 #### Put Eastern_index or Western_index as a group input
 
@@ -96,7 +121,7 @@ compute_wass_matrix <- function(hist_data,group) {
       dist_matrix[j, i] <- d
     }
   }
-  return(dist_matrix)
+  return(sqrt(dist_matrix))
 }
 
 ###### Examples shwoing how to use the function above 
@@ -107,7 +132,7 @@ compute_wass_matrix <- function(hist_data,group) {
 # 
 # 
 # # Deepest object find by depths functions
-# ordes <- order(MSD_cpp(dist_mat_eastern),decreasing = TRUE)[1]
+# ordes <- order(MOD3_cpp(dist_mat_eastern),decreasing = TRUE)[1]
 # deepestES <- df_regions[df_regions$index == idx_east[ordes],1]
 # deepestEShist <- Age_Pyramids_2014[idx_east[ordes]]@M[[1]]
 # 
@@ -125,48 +150,104 @@ pvalue_age_hist <- function(iter, depth_fun) {
   
   for (i in 1:iter) {
     
-    fake_labels <- sample(c(rep("es",16),rep("ws",24)), 40, replace = FALSE)
     
-    east_fake <- df_europe$index[fake_labels %in% c("es")]
+    ###### Western vs Eastern
+    # 
+    # fake_labels <- sample(c(rep("es",16),rep("ws",24)), 40, replace = FALSE)
+    # 
+    # east_fake <- df_europe$index[fake_labels %in% c("es")]
+    # 
+    # west_fake <- df_europe$index[fake_labels %in% c("ws")]
+
     
-    west_fake <- df_europe$index[fake_labels %in% c("ws")]
+    ###### Africa vs Europe
     
+    fake_labels <- sample(c(rep("af",55),rep("eu",40)), 95, replace = FALSE)
+
+    africa_fake <- df_african$index[fake_labels %in% c("af")]
+
+    europe_fake <- df_europe$index[fake_labels %in% c("eu")]
+
     
     ###### Computing Distance for fake indices 
     
-    dist_mat_eastern_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(east_fake))
-    dist_mat_western_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(west_fake))
+    ##### Western vs Eastern
     
-    #Difference in means
+    # dist_mat_eastern_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(east_fake))
+    # dist_mat_western_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(west_fake))
+
+    ###### Africa vs Europe
     
-    ordes <- order(MSD_cpp(dist_mat_eastern_fake),decreasing = TRUE)[1]
-    deepestEShist <- Age_Pyramids_2014[idx_east[ordes]]@M[[1]]
-    
-    
-    
-    ordws <- order(MSD_cpp(dist_mat_western_fake),decreasing = TRUE)[1]
-    deepestWShist <- Age_Pyramids_2014[idx_west[ordws]]@M[[1]]
-    
+    dist_mat_africa_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(africa_fake))
+    dist_mat_europe_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(europe_fake))
 
     
-    distribution[i] <- WassSqDistH(deepestEShist,deepestWShist)
+    ##################### Difference in means
     
+    #### Western vs Eastern
+    
+    # ordes <- order(depth_fun(dist_mat_eastern_fake),decreasing = TRUE)[1]
+    # deepestEShist <- Age_Pyramids_2014[idx_east[ordes]]@M[[1]]
+    # 
+    # 
+    # 
+    # ordws <- order(depth_fun(dist_mat_western_fake),decreasing = TRUE)[1]
+    # deepestWShist <- Age_Pyramids_2014[idx_west[ordws]]@M[[1]]
+    # 
+    # 
+    # 
+    # distribution[i] <- WassSqDistH(deepestEShist,deepestWShist)
+    # 
+    
+    ###### Africa vs Europe
+    
+    ordaf <- order(depth_fun(dist_mat_africa_fake),decreasing = TRUE)[1]
+    deepestAFhist <- Age_Pyramids_2014[idx_african[ordaf]]@M[[1]]
+
+
+
+    ordeu <- order(depth_fun(dist_mat_europe_fake),decreasing = TRUE)[1]
+    deepestEUhist <- Age_Pyramids_2014[idx_europe[ordeu]]@M[[1]]
+
+
+
+    distribution[i] <- sqrt(WassSqDistH(deepestAFhist,deepestEUhist))
+
     
   }
   
   #Difference in means for real observed data
   
-  dist_mat_eastern <- compute_wass_matrix(Age_Pyramids_2014,idx_east)
-  dist_mat_western <- compute_wass_matrix(Age_Pyramids_2014,idx_west)
   
+  #### Western vs Eastern
+  
+  # dist_mat_eastern <- compute_wass_matrix(Age_Pyramids_2014,idx_east)
+  # dist_mat_western <- compute_wass_matrix(Age_Pyramids_2014,idx_west)
+  # 
 
   
-  ordes_r <- order(depth_fun(dist_mat_eastern),decreasing = TRUE)[1]
-
-  ordws_r <- order(depth_fun(dist_mat_western),decreasing = TRUE)[1]
-
-  observed <- WassSqDistH(Age_Pyramids_2014[idx_east[ordes_r]]@M[[1]],
-                          Age_Pyramids_2014[idx_west[ordws_r]]@M[[1]])
+  # ordes_r <- order(depth_fun(dist_mat_eastern),decreasing = TRUE)[1]
+  # 
+  # ordws_r <- order(depth_fun(dist_mat_western),decreasing = TRUE)[1]
+  # 
+  # observed <- WassSqDistH(Age_Pyramids_2014[idx_east[ordes_r]]@M[[1]],
+  #                         Age_Pyramids_2014[idx_west[ordws_r]]@M[[1]])
+  # 
+  # 
+  
+  
+  #### Africa vs Europe 
+  
+  dist_mat_africa <- compute_wass_matrix(Age_Pyramids_2014,idx_african)
+  dist_mat_europe <- compute_wass_matrix(Age_Pyramids_2014,idx_europe)
+  
+  
+  ordaf_r <- order(depth_fun(dist_mat_africa),decreasing = TRUE)[1]
+  
+  ordeu_r <- order(depth_fun(dist_mat_europe),decreasing = TRUE)[1]
+  
+  observed <- sqrt(WassSqDistH(Age_Pyramids_2014[idx_african[ordaf_r]]@M[[1]],
+                          Age_Pyramids_2014[idx_europe[ordeu_r]]@M[[1]]))
   
   
   
@@ -183,7 +264,7 @@ set.seed(2222)
 
 ##### Parameters 
 
-iter = 5000
+iter = 50
 
 model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
 models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
@@ -265,12 +346,12 @@ pvalue_agehist_rev <- function(iter, depth_fun, n_reverse) {
     
     #Difference in means
     
-    ordes <- order(MSD_cpp(dist_mat_eastern_fake),decreasing = TRUE)[1]
+    ordes <- order(depth_fun(dist_mat_eastern_fake),decreasing = TRUE)[1]
     deepestEShist <- Age_Pyramids_2014[idx_east[ordes]]@M[[1]]
     
     
     
-    ordws <- order(MSD_cpp(dist_mat_western_fake),decreasing = TRUE)[1]
+    ordws <- order(depth_fun(dist_mat_western_fake),decreasing = TRUE)[1]
     deepestWShist <- Age_Pyramids_2014[idx_west[ordws]]@M[[1]]
     
     
@@ -310,7 +391,7 @@ set.seed(2222)
 
 ##### Parameters for 7 swaps
 
-iter = 5000
+iter = 50
 n_reverse <- 7
 
 
@@ -386,7 +467,7 @@ p1 = ggplot(results_df, aes(x = Model, y = PValue, fill = Model)) +
   scale_fill_grey(start = 0.1, end = 1) +  
   scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
   labs(title = "",
-       x = expression(paste('depth function')),
+       x = expression(paste('without swaps')),
        y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
   theme_classic() +
   theme(legend.position = "bottom",
@@ -416,7 +497,7 @@ p2 = ggplot(results_df_7, aes(x = Model, y = PValue, fill = Model)) +
   scale_fill_grey(start = 0.1, end = 1) +  
   scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
   labs(title = "",
-       x = expression(paste('depth function')),
+       x = expression(paste('7 swaps')),
        y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
   theme_classic() +
   theme(legend.position = "bottom",
@@ -447,7 +528,7 @@ p3 = ggplot(results_df_12, aes(x = Model, y = PValue, fill = Model)) +
   scale_fill_grey(start = 0.1, end = 1) +  
   scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
   labs(title = "",
-       x = expression(paste('depth function')),
+       x = expression(paste('12 swaps')),
        y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
   theme_classic() +
   theme(legend.position = "bottom",
@@ -469,8 +550,8 @@ p3 = ggplot(results_df_12, aes(x = Model, y = PValue, fill = Model)) +
 
 
 
-pdf("C:/Users/vizama/Documents/1st paper/Real data Example/reversed and original.pdf", 10 ,6)
-ggarrange(p1, p2, p3, ncol=3, nrow=1, common.legend = TRUE, legend="bottom")
+pdf("C:/Users/vizama/Documents/1st paper/realdata/pic/reversed and original.pdf", 10 ,6)
+ggarrange(p1, p2, p3, ncol=3, nrow=1, common.legend = TRUE, legend="none")
 dev.off()
 
 
