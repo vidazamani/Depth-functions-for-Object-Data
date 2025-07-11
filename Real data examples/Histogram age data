@@ -163,10 +163,12 @@ pvalue_age_hist <- function(iter, depth_fun) {
     ###### Africa vs Europe
     
     fake_labels <- sample(c(rep("af",55),rep("eu",40)), 95, replace = FALSE)
+    
+    df_all <- rbind(df_african,df_europe)
 
-    africa_fake <- df_african$index[fake_labels %in% c("af")]
+    africa_fake <- df_all$index[fake_labels %in% c("af")]
 
-    europe_fake <- df_europe$index[fake_labels %in% c("eu")]
+    europe_fake <- df_all$index[fake_labels %in% c("eu")]
 
     
     ###### Computing Distance for fake indices 
@@ -202,12 +204,12 @@ pvalue_age_hist <- function(iter, depth_fun) {
     ###### Africa vs Europe
     
     ordaf <- order(depth_fun(dist_mat_africa_fake),decreasing = TRUE)[1]
-    deepestAFhist <- Age_Pyramids_2014[idx_african[ordaf]]@M[[1]]
+    deepestAFhist <- Age_Pyramids_2014[africa_fake[ordaf]]@M[[1]]
 
 
 
     ordeu <- order(depth_fun(dist_mat_europe_fake),decreasing = TRUE)[1]
-    deepestEUhist <- Age_Pyramids_2014[idx_europe[ordeu]]@M[[1]]
+    deepestEUhist <- Age_Pyramids_2014[europe_fake[ordeu]]@M[[1]]
 
 
 
@@ -259,12 +261,12 @@ pvalue_age_hist <- function(iter, depth_fun) {
 
 
 start_time <- Sys.time()
-set.seed(2222)
+set.seed(2223)
 
 
 ##### Parameters 
 
-iter = 50
+iter = 100
 
 model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
 models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
@@ -303,79 +305,160 @@ running_time <- end_time-start_time
 
 pvalue_agehist_rev <- function(iter, depth_fun, n_reverse) {
   
+  #### Western vs Eastern
   
-  df_eastern_rev <- df_eastern$country
-  df_western_rev <- df_western$country
+  # df_eastern_rev <- df_eastern$country
+  # df_western_rev <- df_western$country
+  # 
+  # 
+  # idx_east_rev <- sample(length(df_eastern_rev), n_reverse)
+  # 
+  # # Perform the swap
+  # temp <- df_eastern_rev[idx_east_rev]
+  # df_eastern_rev[idx_east_rev] <- df_western_rev[idx_east_rev]
+  # df_western_rev[idx_east_rev] <- temp
+  # 
+  # 
+  # df_es_rev <- df_eastern
+  # df_es_rev$country = df_eastern_rev
+  # 
+  # 
+  # df_ws_rev <- df_western
+  # df_ws_rev$country <- df_western_rev
+  # 
+  # #### Africa vs Europe
+  # 
+  df_africa_rev <- df_african$country
+  df_europe_rev <- df_europe$country
+
+
   
-  
-  idx_east_rev <- sample(length(df_eastern_rev), n_reverse)
+  idx_europe_rev <- sample(length(df_europe_rev), n_reverse)
   
   # Perform the swap
-  temp <- df_eastern_rev[idx_east_rev]
-  df_eastern_rev[idx_east_rev] <- df_western_rev[idx_east_rev]
-  df_western_rev[idx_east_rev] <- temp
+  temp <- df_europe_rev[idx_europe_rev]
+  df_europe_rev[idx_europe_rev] <- df_africa_rev[idx_europe_rev]
+  df_africa_rev[idx_europe_rev] <- temp
   
   
-  df_es_rev <- df_eastern
-  df_es_rev$country = df_eastern_rev
+  df_af_rev <- df_african
+  df_af_rev$country = df_africa_rev
   
   
-  df_ws_rev <- df_western
-  df_ws_rev$country <- df_western_rev
-  
-  
+  df_eu_rev <- df_europe
+  df_eu_rev$country <- df_europe_rev
   
   distribution <- c()
   
   
   for (i in 1:iter) {
     
-    fake_labels <- sample(c(rep("es",length(df_eastern_rev)),
-                            rep("ws",length(df_western_rev))), 40, replace = FALSE)
+    #### Western vs Eastern 
     
+    # fake_labels <- sample(c(rep("es",length(df_eastern_rev)),
+    #                         rep("ws",length(df_western_rev))), 40, replace = FALSE)
+    # 
+    # 
+    # east_fake <- df_europe$index[fake_labels %in% c("es")]
+    # 
+    # west_fake <- df_europe$index[fake_labels %in% c("ws")]
+    # 
     
-    east_fake <- df_europe$index[fake_labels %in% c("es")]
+    #### Africa vs Europe
     
-    west_fake <- df_europe$index[fake_labels %in% c("ws")]
+    fake_labels <- sample(c(rep("af",nrow(df_af_rev)),
+                            rep("eu",nrow(df_eu_rev))), 95, replace = FALSE)
+    
+    df_all <- rbind(df_african,df_europe)
+    
+    africa_fake <- df_all$index[fake_labels %in% c("af")]
+    
+    europe_fake <- df_all$index[fake_labels %in% c("eu")]
     
     
     ###### Computing Distance for fake indices 
     
-    dist_mat_eastern_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(east_fake))
-    dist_mat_western_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(west_fake))
+    #### Western vs Eeastern
     
-    #Difference in means
+    # dist_mat_eastern_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(east_fake))
+    # dist_mat_western_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(west_fake))
+    # 
     
-    ordes <- order(depth_fun(dist_mat_eastern_fake),decreasing = TRUE)[1]
-    deepestEShist <- Age_Pyramids_2014[idx_east[ordes]]@M[[1]]
+    #### Africa vs Europe
     
-    
-    
-    ordws <- order(depth_fun(dist_mat_western_fake),decreasing = TRUE)[1]
-    deepestWShist <- Age_Pyramids_2014[idx_west[ordws]]@M[[1]]
+    dist_mat_africa_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(africa_fake))
+    dist_mat_europe_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(europe_fake))
     
     
+    ################### Difference in means
     
-    distribution[i] <- WassSqDistH(deepestEShist,deepestWShist)
+    
+    #### Western vs Eastern 
+    
+    # ordes <- order(depth_fun(dist_mat_eastern_fake),decreasing = TRUE)[1]
+    # deepestEShist <- Age_Pyramids_2014[idx_east[ordes]]@M[[1]]
+    # 
+    # 
+    # 
+    # ordws <- order(depth_fun(dist_mat_western_fake),decreasing = TRUE)[1]
+    # deepestWShist <- Age_Pyramids_2014[idx_west[ordws]]@M[[1]]
+    # 
+    # 
+    # 
+    # distribution[i] <- WassSqDistH(deepestEShist,deepestWShist)
+    # 
+    
+    
+    #### Africa vs Europe 
+    
+    ordaf <- order(depth_fun(dist_mat_africa_fake),decreasing = TRUE)[1]
+    deepestAFhist <- Age_Pyramids_2014[africa_fake[ordaf]]@M[[1]]
+    
+    
+    
+    ordeu <- order(depth_fun(dist_mat_europe_fake),decreasing = TRUE)[1]
+    deepestEUhist <- Age_Pyramids_2014[europe_fake[ordeu]]@M[[1]]
+    
+    
+    
+    distribution[i] <- sqrt(WassSqDistH(deepestAFhist,deepestEUhist))
+    
     
     
   }
     
     
   
-  #Difference in means for real observed data
+  ##### Difference in means for real observed data
   
-  dist_mat_eastern <- compute_wass_matrix(Age_Pyramids_2014,df_es_rev$index)
-  dist_mat_western <- compute_wass_matrix(Age_Pyramids_2014,df_ws_rev$index)
+  #### Western vs Eastern
+  
+  # dist_mat_eastern <- compute_wass_matrix(Age_Pyramids_2014,df_es_rev$index)
+  # dist_mat_western <- compute_wass_matrix(Age_Pyramids_2014,df_ws_rev$index)
+  # 
+  # 
+  # 
+  # ordes_r <- order(depth_fun(dist_mat_eastern),decreasing = TRUE)[1]
+  # 
+  # ordws_r <- order(depth_fun(dist_mat_western),decreasing = TRUE)[1]
+  # 
+  # observed <- WassSqDistH(Age_Pyramids_2014[df_es_rev$index[ordes_r]]@M[[1]],
+  #                         Age_Pyramids_2014[df_ws_rev$index[ordws_r]]@M[[1]])
+  # 
+  
+  #### Africa vs Europe
+  
+  dist_mat_africa <- compute_wass_matrix(Age_Pyramids_2014,df_af_rev$index)
+  dist_mat_europe <- compute_wass_matrix(Age_Pyramids_2014,df_eu_rev$index)
   
   
   
-  ordes_r <- order(depth_fun(dist_mat_eastern),decreasing = TRUE)[1]
+  ordaf_r <- order(depth_fun(dist_mat_africa),decreasing = TRUE)[1]
   
-  ordws_r <- order(depth_fun(dist_mat_western),decreasing = TRUE)[1]
+  ordeu_r <- order(depth_fun(dist_mat_europe),decreasing = TRUE)[1]
   
-  observed <- WassSqDistH(Age_Pyramids_2014[df_es_rev$index[ordes_r]]@M[[1]],
-                          Age_Pyramids_2014[df_ws_rev$index[ordws_r]]@M[[1]])
+  observed <- sqrt(WassSqDistH(Age_Pyramids_2014[df_af_rev$index[ordaf_r]]@M[[1]],
+                          Age_Pyramids_2014[df_eu_rev$index[ordeu_r]]@M[[1]]))
   
   
   pvalue <- sum(abs(distribution) >= abs(c(observed)))/(iter)
@@ -391,7 +474,7 @@ set.seed(2222)
 
 ##### Parameters for 7 swaps
 
-iter = 50
+iter = 10
 n_reverse <- 7
 
 
@@ -422,8 +505,8 @@ running_time <- end_time-start_time
 ##### Parameters for 12 swaps
 
 
-iter = 5000
-n_reverse <- 12
+iter = 100
+n_reverse <- 25
 
 
 model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
