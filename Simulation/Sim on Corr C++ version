@@ -265,7 +265,7 @@ df <- corr_sim_data %>% group_by(method) %>%
 
 
 pdf(file = 
-      "C:/Users/vizama/Documents/1st paper/Sim on corr cpp results/Error/corr error div cpp.pdf",  
+      "C:/Users/vizama/Documents/1st paper/Sim on corr cpp results/Error/corr error relative to MSD cpp.pdf",  
     width = 11, # The width of the plot in inches
     height = 7) # The height of the plot in inches
 
@@ -277,7 +277,7 @@ names(mtd.labs) <- c(3, 5, 10)
 otl.labs <- c("Outlier rate = 5%", "Outlier rate = 10%")
 names(otl.labs) <- c("0.05", "0.1")
 
-levels(corr_sim_data$method) <- c("MHD", "MSD", "MLD", "MOD2", "MOD3")
+levels(df$method) <- c("MHD", "MSD", "MLD", "MOD2", "MOD3")
 
 ggplot()+ 
   facet_grid(outlier_rate~matrix_dimension,
@@ -298,10 +298,10 @@ ggplot()+
         legend.position="bottom",
         legend.title = element_blank(),
         legend.text=element_text(size=14),
-        strip.text.x = element_text(size = 15, 
+        strip.text.x = element_text(size = 16, 
                                     colour = "black",
                                     angle = 90),
-        strip.text.y = element_text(size = 15, 
+        strip.text.y = element_text(size = 16, 
                                     colour = "black",
                                     angle = 90),
         axis.title.x = element_text(size = 16),  # X-axis label size
