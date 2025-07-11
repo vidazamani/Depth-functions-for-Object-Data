@@ -477,69 +477,100 @@ pvalue_agehist_rev <- function(iter, depth_fun, n_reverse) {
 }
 
 
-start_time <- Sys.time()
-set.seed(2222)
+
+number_of_patches <- 10
+iter <- 100
+
+results_df_7_final <- data.frame()
+results_df_12_final <- data.frame()
 
 
-##### Parameters for 7 swaps
+for(batch in 1:number_of_patches){
+  start_time <- Sys.time()
+  set.seed(2222 + batch)
+  
+  
+  ##### Parameters for 7 swaps
+  
+  
+  n_reverse <- 12
+  
+  
+  model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
+  models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
+  
+  
+  combinations <- expand.grid(ModelName = model_names,
+                              stringsAsFactors = FALSE)
+  
+  
+  # Apply the function for each combination and store the results in a data frame
+  results_df_7 <- do.call(rbind, lapply(1:nrow(combinations), function(i) {
+    model <- models[[which(model_names == combinations$ModelName[i])]]
+    data.frame(Model = combinations$ModelName[i],
+               PValue = pvalue_agehist_rev(iter, model,n_reverse))
+  }))
+  
+  # Print the final results
+  # print(results_df_7)
+  
+  results_df_7_final <- bind_rows(results_df_7_final, results_df_7)
+  
+  end_time <- Sys.time()
+  
+  running_time <- end_time-start_time
+  
+  
+  ##### Parameters for 15 swaps
+  
+  n_reverse <- 16
+  
+  
+  model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
+  models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
+  
+  
+  combinations <- expand.grid(ModelName = model_names,
+                              stringsAsFactors = FALSE)
+  
+  
+  # Apply the function for each combination and store the results in a data frame
+  results_df_12 <- do.call(rbind, lapply(1:nrow(combinations), function(i) {
+    model <- models[[which(model_names == combinations$ModelName[i])]]
+    data.frame(Model = combinations$ModelName[i],
+               PValue = pvalue_agehist_rev(iter, model,n_reverse))
+  }))
+  
+  # Print the final results
+  # print(results_df_12)
+  
+  results_df_12_final <- bind_rows(results_df_12_final, results_df_12)
+  
+  end_time <- Sys.time()
+  
+  running_time <- end_time-start_time
+  
+  
+  print(batch)
+}
 
-iter = 100
-n_reverse <- 7
 
 
-model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
-models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
+results_df_7 <- results_df_7_final %>%
+  group_by(Model) %>%
+  summarise(PValue = mean(PValue))
+
+results_df_12 <- results_df_12_final %>%
+  group_by(Model) %>%
+  summarise(PValue = mean(PValue))
 
 
-combinations <- expand.grid(ModelName = model_names,
-                            stringsAsFactors = FALSE)
+
+#
 
 
-# Apply the function for each combination and store the results in a data frame
-results_df_7 <- do.call(rbind, lapply(1:nrow(combinations), function(i) {
-  model <- models[[which(model_names == combinations$ModelName[i])]]
-  data.frame(Model = combinations$ModelName[i],
-             PValue = pvalue_agehist_rev(iter, model,n_reverse))
-}))
 
-# Print the final results
-print(results_df_7)
-
-
-end_time <- Sys.time()
-
-running_time <- end_time-start_time
-
-
-##### Parameters for 12 swaps
-
-
-iter = 100
-n_reverse <- 12
-
-
-model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
-models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
-
-
-combinations <- expand.grid(ModelName = model_names,
-                            stringsAsFactors = FALSE)
-
-
-# Apply the function for each combination and store the results in a data frame
-results_df_12 <- do.call(rbind, lapply(1:nrow(combinations), function(i) {
-  model <- models[[which(model_names == combinations$ModelName[i])]]
-  data.frame(Model = combinations$ModelName[i],
-             PValue = pvalue_agehist_rev(iter, model,n_reverse))
-}))
-
-# Print the final results
-print(results_df_12)
-
-
-end_time <- Sys.time()
-
-running_time <- end_time-start_time
+#
 
 
 My_Theme = theme(
@@ -559,7 +590,7 @@ p1 = ggplot(results_df, aes(x = Model, y = PValue, fill = Model)) +
   scale_fill_grey(start = 0.1, end = 1) +  
   scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
   labs(title = "",
-       x = expression(paste('without swaps')),
+       x = expression(paste('Without swaps')),
        y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
   theme_classic() +
   theme(legend.position = "bottom",
@@ -580,37 +611,6 @@ p1 = ggplot(results_df, aes(x = Model, y = PValue, fill = Model)) +
 
 
 p2 = ggplot(results_df_7, aes(x = Model, y = PValue, fill = Model)) +
-  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
-                   pattern_density = 0.4,
-                   pattern_fill = "black",
-                   pattern_angle = 45,
-                   pattern_spacing = 0.02
-  ) +
-  scale_fill_grey(start = 0.1, end = 1) +  
-  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
-  labs(title = "",
-       x = expression(paste('7 swaps')),
-       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
-  theme_classic() +
-  theme(legend.position = "bottom",
-        legend.key.size = unit(1, "cm"),
-        legend.text=element_text(size=11),
-        strip.text.x = element_text(size = 25, 
-                                    colour = "black",
-                                    angle = 90),
-        strip.text.y = element_text(size = 25, 
-                                    colour = "black",
-                                    angle = 90),
-        axis.text.x = element_text(angle = 45, hjust = 1)) +
-  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
-         pattern = guide_legend(nrow = 1, byrow = TRUE))+
-  geom_hline(yintercept=0.05, linetype="dashed", color = "blue",
-             linewidth=1)+ My_Theme+ 
-  scale_x_discrete(labels = c('0' = expression(infinity)))
-
-
-
-p3 = ggplot(results_df_12, aes(x = Model, y = PValue, fill = Model)) +
   geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
                    pattern_density = 0.4,
                    pattern_fill = "black",
@@ -641,7 +641,38 @@ p3 = ggplot(results_df_12, aes(x = Model, y = PValue, fill = Model)) +
 
 
 
+p3 = ggplot(results_df_12, aes(x = Model, y = PValue, fill = Model)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
+                   pattern_density = 0.4,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_spacing = 0.02
+  ) +
+  scale_fill_grey(start = 0.1, end = 1) +  
+  scale_pattern_manual(values = c("none", "crosshatch", "stripe", "circle", "none")) +  # Custom patterns
+  labs(title = "",
+       x = expression(paste('16 swaps')),
+       y = expression(paste(italic(p),'-',values)), fill = " ", pattern = " ") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(1, "cm"),
+        legend.text=element_text(size=11),
+        strip.text.x = element_text(size = 25, 
+                                    colour = "black",
+                                    angle = 90),
+        strip.text.y = element_text(size = 25, 
+                                    colour = "black",
+                                    angle = 90),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE),
+         pattern = guide_legend(nrow = 1, byrow = TRUE))+
+  geom_hline(yintercept=0.05, linetype="dashed", color = "blue",
+             linewidth=1)+ My_Theme+ 
+  scale_x_discrete(labels = c('0' = expression(infinity)))
 
-pdf("C:/Users/vizama/Documents/1st paper/realdata/pic/reversed and original.pdf", 10 ,6)
+
+
+
+pdf("/Users/jomivi/Library/Mobile Documents/com~apple~CloudDocs/Work/Supervision/Vida/Paper_1_revision/reversed and original.pdf", 10 ,6)
 ggarrange(p1, p2, p3, ncol=3, nrow=1, common.legend = TRUE, legend="none")
 dev.off()
