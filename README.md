@@ -30,7 +30,7 @@ After calling all necessary libraries, and installing MetricDepth_1.1, the next 
 You can see the more detailed examples in [**Real Data example**](https://github.com/vidazamani/Depth-functions-for-Object-Data/tree/15c63bb935e6261f982a280901ab1a48eae834b9/Real%20data%20examples) folder in the current repository.
 
 
-- Section 4.2 simulations - folder [Other Optimizations][https://github.com/vidazamani/Depth-functions-for-Object-Data/tree/main/Other%20Optimizations]
+- Section 4.2 simulations - folder [Other Optimizations](https://github.com/vidazamani/Depth-functions-for-Object-Data/tree/main/Other%20Optimizations).
 
 
 
