@@ -3,18 +3,18 @@
 This project contains code to reproduce the results of the paper named 'Metric Oja Depth, New Statistical Tool for
 Estimating the Most Central Objects' by Zamanifarizhandi, V. and Virta, J.
 
-The goal of the project was to develope a novel measure of statistical depth, the metric Oja depth applicable to any object data. 
+The goal of the project was to develop a novel measure of statistical depth, the metric Oja depth applicable to any object data. 
 
 All code here is written in R and the main used packages are CovTools, ICtest, parallel, fda, ggplot2 and GA.
 
 ## The reason why this project is useful for you
-If you're working with complex datasets, such as matrices or images, the following main functions can help you to identify the most central objects within your data. Simply calculate the distances between objects and apply them as an input in our metric functions.
+If you're working with complex datasets, such as matrices or images, the following main functions can help you to identify the most central objects within your data. Simply calculate the distances between objects and apply them as an input in our metric depth functions.
 
-### The main metric functions are:
+### The main metric depth functions are:
 
 MLD_cpp, MHDVJ_cpp, MSD_cpp, MOD2_cpp, MOD3_cpp,
 
-coded in Rcpp. To use them you need to install from source the R-package MetricDepth_1.1 in the subfolder "All Metric depth function in C++".
+coded in Rcpp. To use them you need to install from source the R-package MetricDepth_1.1 in the subfolder [**All Metric depth function in C++**].
 
 In addition the project contains several helper functions for data generation, computing p-value for real dataset examples and the simulations performed in the paper.
 
@@ -25,9 +25,9 @@ The following list shows which files can be used to replicate which simulation s
 
 ### Great! Then How to Use this Project for my own data?
 
-After calling all necessary libraries, and installing MetricDepth_1.1, the next step is to import your dataset and compute the distance between objects in it. For example if you have functional data use metric.lp(YOUR FD DATA) to achieve this. Finally based on our suggestions in paper choose which depth functions meets your needs the best and use your computed distance matrix as an input in chosen depth function, e.g., MOD3_cpp. Now you have found the depths and, among them, the Most central Object in your dataset!
+After calling all necessary libraries, and installing MetricDepth_1.1, the next step is to import your dataset and compute the distance between objects in it. For example if you have functional data use metric.lp(YOUR FD DATA) to achieve this. Finally based on our suggestions in the paper, choose which depth function meets your needs the best and use your computed distance matrix as an input in the chosen depth function, e.g., MOD3_cpp. Now you have found the depths and, among them, the Most central Object in your dataset!
 
-You can see the more detailed examples in [**Real Data example**](https://github.com/vidazamani/Depth-functions-for-Object-Data/tree/15c63bb935e6261f982a280901ab1a48eae834b9/Real%20data%20examples) Folder in the current repository.
+You can see the more detailed examples in [**Real Data example**](https://github.com/vidazamani/Depth-functions-for-Object-Data/tree/15c63bb935e6261f982a280901ab1a48eae834b9/Real%20data%20examples) folder in the current repository.
 
 
 
