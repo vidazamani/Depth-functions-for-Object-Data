@@ -22,7 +22,7 @@ In addition the project contains several helper functions for data generation, c
 
 The following list shows which files can be used to replicate which simulation study in the manuscript:
 
-- Section 4.1.1 simulations - 
+- Section 4.1.1 simulations - [Simulation/Sim on Corr C++ version.R]
 - Section 4.2 simulations - folder [Other Optimizations](https://github.com/vidazamani/Depth-functions-for-Object-Data/tree/main/Other%20Optimizations).
 
 
