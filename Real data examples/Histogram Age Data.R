@@ -158,18 +158,18 @@ pvalue_age_hist <- function(iter, depth_fun) {
     # east_fake <- df_europe$index[fake_labels %in% c("es")]
     # 
     # west_fake <- df_europe$index[fake_labels %in% c("ws")]
-
+    
     
     ###### Africa vs Europe
     
     fake_labels <- sample(c(rep("af",55),rep("eu",40)), 95, replace = FALSE)
     
     df_all <- rbind(df_african,df_europe)
-
+    
     africa_fake <- df_all$index[fake_labels %in% c("af")]
-
+    
     europe_fake <- df_all$index[fake_labels %in% c("eu")]
-
+    
     
     ###### Computing Distance for fake indices 
     
@@ -177,12 +177,12 @@ pvalue_age_hist <- function(iter, depth_fun) {
     
     # dist_mat_eastern_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(east_fake))
     # dist_mat_western_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(west_fake))
-
+    
     ###### Africa vs Europe
     
     dist_mat_africa_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(africa_fake))
     dist_mat_europe_fake <- compute_wass_matrix(Age_Pyramids_2014,na.omit(europe_fake))
-
+    
     
     ##################### Difference in means
     
@@ -205,16 +205,16 @@ pvalue_age_hist <- function(iter, depth_fun) {
     
     ordaf <- order(depth_fun(dist_mat_africa_fake),decreasing = TRUE)[1]
     deepestAFhist <- Age_Pyramids_2014[africa_fake[ordaf]]@M[[1]]
-
-
-
+    
+    
+    
     ordeu <- order(depth_fun(dist_mat_europe_fake),decreasing = TRUE)[1]
     deepestEUhist <- Age_Pyramids_2014[europe_fake[ordeu]]@M[[1]]
-
-
-
+    
+    
+    
     distribution[i] <- sqrt(WassSqDistH(deepestAFhist,deepestEUhist))
-
+    
     
   }
   
@@ -226,7 +226,7 @@ pvalue_age_hist <- function(iter, depth_fun) {
   # dist_mat_eastern <- compute_wass_matrix(Age_Pyramids_2014,idx_east)
   # dist_mat_western <- compute_wass_matrix(Age_Pyramids_2014,idx_west)
   # 
-
+  
   
   # ordes_r <- order(depth_fun(dist_mat_eastern),decreasing = TRUE)[1]
   # 
@@ -249,7 +249,7 @@ pvalue_age_hist <- function(iter, depth_fun) {
   ordeu_r <- order(depth_fun(dist_mat_europe),decreasing = TRUE)[1]
   
   observed <- sqrt(WassSqDistH(Age_Pyramids_2014[idx_african[ordaf_r]]@M[[1]],
-                          Age_Pyramids_2014[idx_europe[ordeu_r]]@M[[1]]))
+                               Age_Pyramids_2014[idx_europe[ordeu_r]]@M[[1]]))
   
   
   
@@ -266,7 +266,7 @@ set.seed(2223)
 
 ##### Parameters 
 
-iter = 100
+iter = 10
 
 model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
 models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
@@ -330,23 +330,32 @@ pvalue_agehist_rev <- function(iter, depth_fun, n_reverse) {
   # 
   df_africa_rev <- df_african$country
   df_europe_rev <- df_europe$country
-
-
   
-  idx_europe_rev <- sample(length(df_europe_rev), n_reverse)
+  idx_europe_rev <- idx_europe
+  idx_african_rev <- idx_african
+  
+  idx_swap <- sample(length(df_europe_rev), n_reverse)
   
   # Perform the swap
-  temp <- df_europe_rev[idx_europe_rev]
-  df_europe_rev[idx_europe_rev] <- df_africa_rev[idx_europe_rev]
-  df_africa_rev[idx_europe_rev] <- temp
+  temp <- idx_europe[idx_swap]
+  idx_europe_rev[idx_swap] <- idx_african_rev[idx_swap]
+  idx_african_rev[idx_swap] <- temp
   
   
-  df_af_rev <- df_african
-  df_af_rev$country = df_africa_rev
+  df_all_now <- rbind(df_african, df_europe)
   
+  df_af_rev <- data.frame()
+  for(i in 1:length(idx_african_rev)){
+    df_af_rev <- bind_rows(df_af_rev, df_all_now[df_all_now$index == idx_african_rev[i], ])
+  }
+  df_af_rev
   
-  df_eu_rev <- df_europe
-  df_eu_rev$country <- df_europe_rev
+  df_eu_rev <- data.frame()
+  for(i in 1:length(idx_europe_rev)){
+    df_eu_rev <- bind_rows(df_eu_rev, df_all_now[df_all_now$index == idx_europe_rev[i], ])
+  }
+  df_eu_rev
+  
   
   distribution <- c()
   
@@ -369,7 +378,7 @@ pvalue_agehist_rev <- function(iter, depth_fun, n_reverse) {
     fake_labels <- sample(c(rep("af",nrow(df_af_rev)),
                             rep("eu",nrow(df_eu_rev))), 95, replace = FALSE)
     
-    df_all <- rbind(df_african,df_europe)
+    df_all <- rbind(df_af_rev, df_eu_rev)
     
     africa_fake <- df_all$index[fake_labels %in% c("af")]
     
@@ -426,8 +435,8 @@ pvalue_agehist_rev <- function(iter, depth_fun, n_reverse) {
     
     
   }
-    
-    
+  
+  
   
   ##### Difference in means for real observed data
   
@@ -458,7 +467,7 @@ pvalue_agehist_rev <- function(iter, depth_fun, n_reverse) {
   ordeu_r <- order(depth_fun(dist_mat_europe),decreasing = TRUE)[1]
   
   observed <- sqrt(WassSqDistH(Age_Pyramids_2014[df_af_rev$index[ordaf_r]]@M[[1]],
-                          Age_Pyramids_2014[df_eu_rev$index[ordeu_r]]@M[[1]]))
+                               Age_Pyramids_2014[df_eu_rev$index[ordeu_r]]@M[[1]]))
   
   
   pvalue <- sum(abs(distribution) >= abs(c(observed)))/(iter)
@@ -474,7 +483,7 @@ set.seed(2222)
 
 ##### Parameters for 7 swaps
 
-iter = 10
+iter = 100
 n_reverse <- 7
 
 
@@ -506,7 +515,7 @@ running_time <- end_time-start_time
 
 
 iter = 100
-n_reverse <- 25
+n_reverse <- 12
 
 
 model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
@@ -636,12 +645,3 @@ p3 = ggplot(results_df_12, aes(x = Model, y = PValue, fill = Model)) +
 pdf("C:/Users/vizama/Documents/1st paper/realdata/pic/reversed and original.pdf", 10 ,6)
 ggarrange(p1, p2, p3, ncol=3, nrow=1, common.legend = TRUE, legend="none")
 dev.off()
-
-
-
-
-
-
-
-
-
