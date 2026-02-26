@@ -1,0 +1,14 @@
+Package: RelativeDepth
+Title: Relative Metric Depth Functions
+Version: 0.1.0
+Authors@R: person("Your", "Name",
+                  email = "you@email.com",
+                  role = c("aut", "cre"))
+Description: Implements relative versions of metric depth
+             functions for object data.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Imports: stats
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
