@@ -10,6 +10,8 @@ library(ggplot2)
 
 
 
+remotes::install_github('vidazamani/Depth-functions-for-Object-Data/RelativeDepth')
+library(RelativeDepth)
 
 
 # Pull out the M matrix of distributionH objects
@@ -111,7 +113,7 @@ df_african <- data.frame(
   stringsAsFactors = FALSE
 )
 
-#### Put Eastern_index or Western_index as a group input
+####  Wasserstein Distance Function
 
 compute_wass_matrix <- function(hist_data,group) {
   n <- length(group) 
@@ -132,10 +134,15 @@ compute_wass_matrix <- function(hist_data,group) {
 ##### Parameters 
 
 
-model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
-models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
+depth_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
+depth_models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
 
 
+depth_relative_models <- list(MOD3_relative,
+                              MOD2_relative,
+                              MHD_relative,
+                              MLD_relative,
+                              MSD_relative)
 
 
 
@@ -172,11 +179,11 @@ rank_test_agehist <- function(depth_fun) {
 
 results_rank <- data.frame()
 
-for (i in 1:length(models)) {
-  pvalw <- rank_test_agehist(models[[i]])$pvaluew
-  pvalk <- rank_test_agehist(models[[i]])$pvaluek
+for (i in 1:length(depth_models)) {
+  pvalw <- rank_test_agehist(depth_models[[i]])$pvaluew
+  pvalk <- rank_test_agehist(depth_models[[i]])$pvaluek
   results_rank <- rbind(results_rank,
-                        data.frame(Model = model_names[i],
+                        data.frame(Model = depth_names[i],
                                    PValuew = pvalw, PValuek = pvalk))
 }
 
@@ -223,247 +230,17 @@ compute_K_type <- function(depth_fun) {
 
 results_K <- data.frame()
 
-for (i in 1:length(models)) {
-  out <- compute_K_type(models[[i]])
+for (i in 1:length(depth_models)) {
+  out <- compute_K_type(depth_models[[i]])
   
   results_K <- rbind(results_K,
-                     data.frame(Model = model_names[i],
+                     data.frame(Model = depth_names[i],
                                 K_stat = out$K_statistic,
                                 PValue = out$p_value))
 }
 
 print(results_K)
 
-################# Relative Depth Functions ############################
-
-MLD_relative <- function(D, ref_idx) {
-  
-  n_total <- nrow(D)
-  n_ref   <- length(ref_idx)
-  
-  lens_depth <- rep(0, n_total)
-  
-  for (p in 1:n_total) {
-    
-    s <- 0
-    
-    for (a in 1:(n_ref-1)) {
-      for (b in (a+1):n_ref) {
-        
-        i <- ref_idx[a]
-        j <- ref_idx[b]
-        
-        maximum <- max(D[i,p], D[j,p])
-        
-        if (D[i,j] > maximum + 1e-6) {
-          s <- s + 1
-        }
-      }
-    }
-    
-    lens_depth[p] <- (1/choose(n_ref,2)) * s
-  }
-  
-  return(lens_depth)
-}
-
-
-MLD_relative <- function(D, ref_idx) {
-  
-  n_total <- nrow(D)
-  n_ref   <- length(ref_idx)
-  
-  lens_depth <- rep(0, n_total)
-  
-  for (p in 1:n_total) {
-    
-    s <- 0
-    
-    for (a in 1:(n_ref-1)) {
-      for (b in (a+1):n_ref) {
-        
-        i <- ref_idx[a]
-        j <- ref_idx[b]
-        
-        maximum <- max(D[i,p], D[j,p])
-        
-        if (D[i,j] > maximum + 1e-6) {
-          s <- s + 1
-        }
-      }
-    }
-    
-    lens_depth[p] <- (1/choose(n_ref,2)) * s
-  }
-  
-  return(lens_depth)
-}
-
-
-MHD_relative <- function(D, ref_idx) {
-  
-  n_total <- nrow(D)
-  n_ref   <- length(ref_idx)
-  
-  p_mat <- matrix(0, n_ref, n_ref)
-  
-  # Build halfspaces using reference group only
-  for (a in 1:(n_ref-1)) {
-    for (b in (a+1):n_ref) {
-      
-      i <- ref_idx[a]
-      j <- ref_idx[b]
-      
-      s <- 0
-      
-      for (k in ref_idx) {
-        if (D[k,i] <= D[k,j] + 1e-6) {
-          s <- s + 1
-        }
-      }
-      
-      p_mat[a,b] <- s / n_ref
-    }
-  }
-  
-  depth_vals <- rep(0, n_total)
-  
-  for (y in 1:n_total) {
-    
-    Q <- c()
-    
-    for (a in 1:(n_ref-1)) {
-      for (b in (a+1):n_ref) {
-        
-        i <- ref_idx[a]
-        j <- ref_idx[b]
-        
-        if (D[y,i] <= D[y,j] + 1e-6) {
-          Q <- c(Q, p_mat[a,b])
-        }
-      }
-    }
-    
-    depth_vals[y] <- min(Q)
-  }
-  
-  return(depth_vals)
-}
-
-
-MSD_relative <- function(D, ref_idx) {
-  
-  n_total <- nrow(D)
-  n_ref   <- length(ref_idx)
-  
-  res <- rep(0, n_total)
-  
-  for (k in 1:n_total) {
-    
-    res_now <- 0
-    
-    for (i in ref_idx) {
-      for (j in ref_idx) {
-        
-        if (i != j && D[k,i] > 1e-6 && D[k,j] > 1e-6) {
-          
-          temp <- D[k,i] / D[k,j]
-          
-          res_now <- res_now + 
-            temp + 1/temp - D[i,j]^2 / (D[k,i] * D[k,j])
-        }
-      }
-    }
-    
-    res[k] <- res_now
-  }
-  
-  res <- res / (n_ref^2)
-  
-  return(1 - 0.5 * res)
-}
-
-
-MOD2_relative <- function(D, ref_idx) {
-  
-  n_total <- nrow(D)
-  n_ref   <- length(ref_idx)
-  
-  ojadepth <- rep(0, n_total)
-  
-  for (w in 1:n_total) {
-    
-    area <- 0
-    
-    for (a in 1:(n_ref-1)) {
-      for (b in (a+1):n_ref) {
-        
-        i <- ref_idx[a]
-        j <- ref_idx[b]
-        
-        S <- matrix(c(
-          (D[i,w])^2,
-          -0.5*((D[j,i])^2 - D[j,w]^2 - D[i,w]^2),
-          -0.5*((D[i,j])^2 - D[i,w]^2 - D[j,w]^2),
-          (D[j,w])^2
-        ), 2, 2)
-        
-        detS <- det(S)
-        if (detS > 1e-6)
-          area <- area + sqrt(detS)
-      }
-    }
-    
-    ojadepth[w] <- 1 / (1 + (1/(0.5*(n_ref^2 - n_ref))) * area)
-  }
-  
-  return(ojadepth)
-}
-
-MOD3_relative <- function(D, ref_idx) {
-  
-  n_total <- nrow(D)
-  n_ref   <- length(ref_idx)
-  
-  ojadepth <- rep(0, n_total)
-  
-  for (w in 1:n_total) {
-    
-    area <- 0
-    
-    for (a in 1:(n_ref-2)) {
-      for (b in (a+1):(n_ref-1)) {
-        for (c in (b+1):n_ref) {
-          
-          i <- ref_idx[a]
-          j <- ref_idx[b]
-          k <- ref_idx[c]
-          
-          S <- matrix(c(
-            (D[i,w])^2,
-            -0.5*((D[j,i])^2 - D[j,w]^2 - D[i,w]^2),
-            -0.5*((D[k,i])^2 - D[k,w]^2 - D[i,w]^2),
-            -0.5*((D[i,j])^2 - D[i,w]^2 - D[j,w]^2),
-            (D[j,w])^2,
-            -0.5*((D[k,j])^2 - D[k,w]^2 - D[j,w]^2),
-            -0.5*((D[i,k])^2 - D[i,w]^2 - D[k,w]^2),
-            -0.5*((D[j,k])^2 - D[j,w]^2 - D[k,w]^2),
-            (D[k,w])^2
-          ), 3, 3)
-          
-          detS <- det(S)
-          
-          if (detS > 1e-6)
-            area <- area + sqrt(detS)
-        }
-      }
-    }
-    
-    ojadepth[w] <- 1 / (1 + (1/(0.5*(n_ref-1)*(n_ref^2))) * area)
-  }
-  
-  return(ojadepth)
-}
 
 ########################################################################
 
@@ -558,20 +335,11 @@ H_statistic_relative <- function(depth_relative_fun,
 
 results_H <- data.frame()
 
-depth_functions <- list(
-  MLD_relative,
-  MHD_relative,
-  MSD_relative,
-  MOD2_relative,
-  MOD3_relative
-)
 
-depth_names <- c("MLD","MHD","MSD","MOD2","MOD3")
-
-for (i in 1:length(depth_functions)) {
+for (i in 1:length(depth_relative_models)) {
   
   out <- H_statistic_relative(
-    depth_relative_fun = depth_functions[[i]],
+    depth_relative_fun = depth_relative_models[[i]],
     idx_group1 = idx_african,
     idx_group2 = idx_europe,
     data_object = Age_Pyramids_2014
@@ -638,81 +406,230 @@ print(p)
 
 
 
-################## pseudo-H Statistics #################################
-## Important note: you are still giving depth_fun a square matrix of size n × n.
-## You have only Reordered rows and columns. You have NOT changed the reference distribution.
-## So mathematically: D(x_i, F_k) is not being computed.
-## We are still computing D(x_i, F_pooled)
 
-# rank_test_agehist_H <- function(depth_fun) {
-#   
-#   idx_all <- c(idx_african, idx_europe)
-#   n1 <- length(idx_african)
-#   n2 <- length(idx_europe)
-#   n  <- n1 + n2
-#   t  <- 2
-# 
-#   # Precompute full distance matrix
-#   dist_mat_all <- compute_wass_matrix(Age_Pyramids_2014, idx_all)
-#   
-#   compute_Hk <- function(ref_idx) {
-#     
-#     # Positions of reference group inside pooled sample
-#     ref_pos <- match(ref_idx, idx_all)
-#     
-#     # Build a new square matrix:
-#     # distances among ALL observations
-#     # but depths computed relative to reference group
-#     
-#     # For distance-based depths, the trick is:
-#     # reorder matrix so reference group is first
-#     
-#     perm_order <- c(ref_pos, setdiff(1:n, ref_pos))
-#     dist_perm  <- dist_mat_all[perm_order, perm_order]
-#     
-#     # Compute depth on permuted matrix
-#     depth_perm <- depth_fun(dist_perm)
-#     
-#     # Extract depth values corresponding to original ordering
-#     depth_all <- depth_perm[order(perm_order)]
-#     
-#     # Rank
-#     ranks <- rank(depth_all, ties.method = "average")
-#     
-#     # Group means
-#     R1_bar <- mean(ranks[1:n1])
-#     R2_bar <- mean(ranks[(n1+1):n])
-#     
-#     Hk <- (12 / (n * (n + 1))) * (
-#       n1 * (R1_bar - (n + 1)/2)^2 +
-#         n2 * (R2_bar - (n + 1)/2)^2
-#     )
-#     
-#     return(Hk)
-#   }
-#   
-#   H1 <- compute_Hk(idx_african)
-#   H2 <- compute_Hk(idx_europe)
-#   
-#   H_value <- (H1 + H2) / t
-#   
-#   p_value <- 1 - pchisq(H_value, df = 1)
-#   
-#   return(list(H_stat = H_value, PValue = p_value))
-# }
-# 
-# 
-# 
-# results_H <- data.frame()
-# 
-# for (i in 1:length(models)) {
-#   out <- rank_test_agehist_H(models[[i]])
-#   
-#   results_H <- rbind(results_H,
-#                      data.frame(Model = model_names[i],
-#                                 H_stat = out$H_stat,
-#                                 PValue = out$PValue))
-# }
-# 
-# print(results_H)
-# 
+
+################### Swaps #####################
+
+compute_K_with_groups <- function(depth_fun, idx_group1, idx_group2) {
+  
+  idx_all <- c(idx_group1, idx_group2)
+  
+  n1 <- length(idx_group1)
+  n2 <- length(idx_group2)
+  n  <- n1 + n2
+  
+  dist_mat_all <- compute_wass_matrix(Age_Pyramids_2014, idx_all)
+  
+  depth_values <- depth_fun(dist_mat_all)
+  
+  ranks <- rank(depth_values, ties.method = "average")
+  
+  R1_sum <- sum(ranks[1:n1])
+  R2_sum <- sum(ranks[(n1+1):n])
+  
+  K <- (12 / (n * (n + 1))) *
+    (R1_sum^2 / n1 + R2_sum^2 / n2) -
+    3 * (n + 1)
+  
+  p_value <- 1 - pchisq(K, df = 1)
+  
+  return(p_value)
+}
+
+
+
+compute_H_with_groups <- function(depth_relative_fun,
+                                  idx_group1,
+                                  idx_group2) {
+  
+  idx_all <- c(idx_group1, idx_group2)
+  
+  n1 <- length(idx_group1)
+  n2 <- length(idx_group2)
+  n  <- n1 + n2
+  
+  dist_mat_all <- compute_wass_matrix(Age_Pyramids_2014, idx_all)
+  
+  compute_Hk <- function(ref_positions) {
+    
+    depth_vals <- depth_relative_fun(dist_mat_all, ref_positions)
+    
+    ranks <- rank(depth_vals, ties.method = "average")
+    
+    R1_bar <- mean(ranks[1:n1])
+    R2_bar <- mean(ranks[(n1+1):n])
+    
+    Hk <- (12 / (n * (n + 1))) *
+      (n1 * (R1_bar - (n + 1)/2)^2 +
+         n2 * (R2_bar - (n + 1)/2)^2)
+    
+    return(Hk)
+  }
+  
+  H1 <- compute_Hk(1:n1)
+  H2 <- compute_Hk((n1+1):n)
+  
+  H_value <- (H1 + H2) / 2
+  
+  p_value <- 1 - pchisq(H_value, df = 1)
+  
+  return(p_value)
+}
+
+contamination_rank_tests <- function(n_reverse,
+                                     n_batches = 10,
+                                     depth_fun,
+                                     depth_relative_fun) {
+  
+  pvals_K <- c()
+  pvals_H <- c()
+  
+  for (batch in 1:n_batches) {
+    
+    set.seed(4000 + batch)
+    
+    idx_africa_rev <- idx_african
+    idx_europe_rev <- idx_europe
+    
+    idx_swap <- sample(length(idx_europe_rev), n_reverse)
+    
+    # Swap labels
+    temp <- idx_europe_rev[idx_swap]
+    idx_europe_rev[idx_swap] <- idx_africa_rev[idx_swap]
+    idx_africa_rev[idx_swap] <- temp
+    
+    # K-type
+    pvals_K[batch] <- compute_K_with_groups(depth_fun,
+                                            idx_africa_rev,
+                                            idx_europe_rev)
+    
+    # H-type
+    pvals_H[batch] <- compute_H_with_groups(depth_relative_fun,
+                                            idx_africa_rev,
+                                            idx_europe_rev)
+  }
+  
+  return(list(K_mean = mean(pvals_K),
+              H_mean = mean(pvals_H)))
+}
+
+
+
+
+
+
+results_12 <- data.frame()
+
+for (i in 1:length(depth_models)) {
+  
+  res <- contamination_rank_tests(
+    n_reverse = 12,
+    depth_fun = depth_models[[i]],
+    depth_relative_fun = depth_relative_models[[i]]
+  )
+  
+  results_12 <- rbind(results_12,
+                      data.frame(Model = depth_names[i],
+                                 K_PValue = res$K_mean,
+                                 H_PValue = res$H_mean))
+}
+
+results_16 <- data.frame()
+
+for (i in 1:length(depth_models)) {
+  
+  res <- contamination_rank_tests(
+    n_reverse = 16,
+    depth_fun = depth_models[[i]],
+    depth_relative_fun = depth_relative_models[[i]]
+  )
+  
+  results_16 <- rbind(results_16,
+                      data.frame(Model = depth_names[i],
+                                 K_PValue = res$K_mean,
+                                 H_PValue = res$H_mean))
+}
+
+
+print(results_12)
+print(results_16)
+
+
+
+####### Visualization 
+
+df_12 <- results_12 %>%
+  tidyr::pivot_longer(cols = c(K_PValue, H_PValue),
+                      names_to = "Test",
+                      values_to = "PValue") %>%
+  dplyr::mutate(
+    Test = dplyr::recode(Test,
+                         K_PValue = "K-type",
+                         H_PValue = "H-type"),
+    Scenario = "12 swaps"
+  )
+
+
+df_16 <- results_16 %>%
+  tidyr::pivot_longer(cols = c(K_PValue, H_PValue),
+                      names_to = "Test",
+                      values_to = "PValue") %>%
+  dplyr::mutate(
+    Test = dplyr::recode(Test,
+                         K_PValue = "K-type",
+                         H_PValue = "H-type"),
+    Scenario = "16 swaps"
+  )
+
+
+df_clean <- df_plot %>%
+  dplyr::select(Model, Test, PValue) %>%
+  dplyr::mutate(Scenario = "No swaps")
+
+
+df_all <- dplyr::bind_rows(df_clean, df_12, df_16)
+
+df_all <- df_all %>%
+  dplyr::mutate(logP = -log10(PValue))
+
+df_all$Scenario <- factor(df_all$Scenario,
+                          levels = c("No swaps",
+                                     "12 swaps",
+                                     "16 swaps"))
+
+p_all <- ggplot(df_all,
+                aes(x = Model,
+                    y = logP,
+                    fill = Test)) +
+  
+  geom_col(position = position_dodge(width = 0.7),
+           width = 0.6,
+           color = "black",
+           linewidth = 0.4) +
+  
+  geom_hline(yintercept = -log10(0.05),
+             linetype = "dashed",
+             linewidth = 0.8,
+             color = "blue") +
+  
+  scale_fill_manual(values = c("K-type" = "grey40",
+                               "H-type" = "grey75")) +
+  
+  facet_wrap(~ Scenario, nrow = 1, strip.position = "top") +
+  
+  labs(
+    x = "",
+    y = expression(-log[10](italic(p_value))),
+    fill = ""
+  ) +
+  
+  theme_classic(base_size = 12) +
+  theme(
+    strip.background = element_blank(),
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    panel.grid = element_blank()
+  )
+
+
+print(p_all)
