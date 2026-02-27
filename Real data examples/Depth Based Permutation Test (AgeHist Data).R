@@ -1,14 +1,17 @@
 library(HistDAWass)
 library(tidyr)
+library(dplyr)
 library(Rcpp) ## you need to have the latest version of Rcpp
-library(MetricDepth)
 library(ggpattern) 
 library(patchwork)
 library(ggpubr)
 
 
-Age_Pyramids_2014
+remotes::install_github('vidazamani/Depth-functions-for-Object-Data/MetricDepthCpp')
+library(MetricDepth)
 
+
+Age_Pyramids_2014
 
 # Pull out the M matrix of distributionH objects
 M <- attr(Age_Pyramids_2014, "M")
@@ -266,7 +269,7 @@ set.seed(2223)
 
 ##### Parameters 
 
-iter = 10
+iter = 500
 
 model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
 models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
@@ -479,10 +482,10 @@ pvalue_agehist_rev <- function(iter, depth_fun, n_reverse) {
 
 
 number_of_patches <- 10
-iter <- 100
+iter <- 500
 
-results_df_7_final <- data.frame()
 results_df_12_final <- data.frame()
+results_df_16_final <- data.frame()
 
 
 for(batch in 1:number_of_patches){
@@ -490,40 +493,10 @@ for(batch in 1:number_of_patches){
   set.seed(2222 + batch)
   
   
-  ##### Parameters for 7 swaps
+  ##### Parameters for 12 swaps
   
   
   n_reverse <- 12
-  
-  
-  model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
-  models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
-  
-  
-  combinations <- expand.grid(ModelName = model_names,
-                              stringsAsFactors = FALSE)
-  
-  
-  # Apply the function for each combination and store the results in a data frame
-  results_df_7 <- do.call(rbind, lapply(1:nrow(combinations), function(i) {
-    model <- models[[which(model_names == combinations$ModelName[i])]]
-    data.frame(Model = combinations$ModelName[i],
-               PValue = pvalue_agehist_rev(iter, model,n_reverse))
-  }))
-  
-  # Print the final results
-  # print(results_df_7)
-  
-  results_df_7_final <- bind_rows(results_df_7_final, results_df_7)
-  
-  end_time <- Sys.time()
-  
-  running_time <- end_time-start_time
-  
-  
-  ##### Parameters for 15 swaps
-  
-  n_reverse <- 16
   
   
   model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
@@ -551,16 +524,46 @@ for(batch in 1:number_of_patches){
   running_time <- end_time-start_time
   
   
+  ##### Parameters for 16 swaps
+  
+  n_reverse <- 16
+  
+  
+  model_names <- c("MOD3", "MOD2", "MHD", "MLD", "MSD")
+  models <- list(MOD3_cpp, MOD2_cpp, MHD_cpp, MLD_cpp, MSD_cpp)
+  
+  
+  combinations <- expand.grid(ModelName = model_names,
+                              stringsAsFactors = FALSE)
+  
+  
+  # Apply the function for each combination and store the results in a data frame
+  results_df_16 <- do.call(rbind, lapply(1:nrow(combinations), function(i) {
+    model <- models[[which(model_names == combinations$ModelName[i])]]
+    data.frame(Model = combinations$ModelName[i],
+               PValue = pvalue_agehist_rev(iter, model,n_reverse))
+  }))
+  
+  # Print the final results
+  # print(results_df_16)
+  
+  results_df_16_final <- bind_rows(results_df_16_final, results_df_16)
+  
+  end_time <- Sys.time()
+  
+  running_time <- end_time-start_time
+  
+  
   print(batch)
 }
 
 
 
-results_df_7 <- results_df_7_final %>%
+results_df_12 <- results_df_12_final %>%
   group_by(Model) %>%
   summarise(PValue = mean(PValue))
 
-results_df_12 <- results_df_12_final %>%
+results_df_16 <- results_df_16_final %>%
   group_by(Model) %>%
   summarise(PValue = mean(PValue))
 
@@ -610,7 +613,7 @@ p1 = ggplot(results_df, aes(x = Model, y = PValue, fill = Model)) +
   scale_x_discrete(labels = c('0' = expression(infinity)))
 
 
-p2 = ggplot(results_df_7, aes(x = Model, y = PValue, fill = Model)) +
+p2 = ggplot(results_df_12, aes(x = Model, y = PValue, fill = Model)) +
   geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
                    pattern_density = 0.4,
                    pattern_fill = "black",
@@ -641,7 +644,7 @@ p2 = ggplot(results_df_7, aes(x = Model, y = PValue, fill = Model)) +
 
 
 
-p3 = ggplot(results_df_12, aes(x = Model, y = PValue, fill = Model)) +
+p3 = ggplot(results_df_16, aes(x = Model, y = PValue, fill = Model)) +
   geom_bar_pattern(stat = "identity", position = "dodge", color = "black",
                    pattern_density = 0.4,
                    pattern_fill = "black",
