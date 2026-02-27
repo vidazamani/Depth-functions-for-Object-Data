@@ -12,9 +12,7 @@ If you're working with complex datasets, such as matrices or images, the followi
 
 ### The main metric depth functions are:
 
-MLD_cpp, MHD_cpp, MSD_cpp, MOD2_cpp, MOD3_cpp,
-
-coded in Rcpp. To use them you have two ways:
+MLD_cpp, MHD_cpp, MSD_cpp, MOD2_cpp, MOD3_cpp, coded in Rcpp. To use them you have two ways:
 
 1) Intall from github
 
