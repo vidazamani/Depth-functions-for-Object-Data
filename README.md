@@ -21,7 +21,7 @@ remotes::install_github('vidazamani/Depth-functions-for-Object-Data/MetricDepthC
 library(MetricDepth)
 ```
 
-2) To install from source the R-package MetricDepth_1.1 in the subfolder [**All Metric depth function in C++**](https://github.com/vidazamani/Depth-functions-for-Object-Data/tree/main/All%20Metric%20depth%20function%20in%20C%2B%2B).
+2) Install from source the R-package MetricDepth_1.1 in the subfolder [**All Metric depth function in C++**](https://github.com/vidazamani/Depth-functions-for-Object-Data/tree/main/All%20Metric%20depth%20function%20in%20C%2B%2B).
 
 In addition the project contains several helper functions for data generation, computing p-value for real dataset examples and the simulations performed in the paper.
 
