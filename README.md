@@ -8,7 +8,7 @@ The goal of the project was to develop a novel measure of statistical depth, the
 All code here is written in R and the main used packages are CovTools, ICtest, parallel, fda, ggplot2 and GA.
 
 ## The reason why this project is useful for you
-If you're working with complex datasets, such as matrices or images, the following main functions can help you to identify the most central objects within your data. Simply calculate the distances between objects and apply them as an input in our metric depth functions.
+If you're working with complex datasets, such as matrices or images, the following main functions can help you to identify the most central objects within your data. Simply calculate the distances between objects and apply them as an input in the proposed metric depth functions here.
 
 ### The main metric depth functions are:
 
