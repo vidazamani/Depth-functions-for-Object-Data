@@ -1,0 +1,14 @@
+Package: MetricDepth
+Type: Package
+Title: Concise Summary of What the Package Does
+Version: 1.1
+Date: 2025-05-27
+Authors@R: person("Your", "Name", role = c("aut", "cre"), email = "your@email.com")
+Description: More about what it does (maybe more than one line).
+License: GPL (>= 2)
+Imports: Rcpp (>= 1.0.14)
+LinkingTo: Rcpp
+NeedsCompilation: yes
+Packaged: 2025-06-19 14:49:37 UTC; jomivi
+Author: Your Name [aut, cre]
+Maintainer: Your Name <your@email.com>
