@@ -125,7 +125,7 @@ MSD_relative <- function(D, ref_idx) {
     for (i in ref_idx) {
       for (j in ref_idx) {
 
-        if (i != j && D[k,i] > 1e-6 && D[k,j] > 1e-6) {
+        if (D[k,i] > 1e-6 && D[k,j] > 1e-6) {
 
           temp <- D[k,i] / D[k,j]
 
@@ -233,13 +233,12 @@ MOD3_relative <- function(D, ref_idx) {
 
           detS <- det(S)
 
-          if (detS > 1e-6)
-            area <- area + sqrt(detS)
+          area <- area + sqrt(detS + 4*D[i,w]^2*D[j,w]^2*D[k,w]^2)
         }
       }
     }
 
-    ojadepth[w] <- 1 / (1 + (1/(0.5*(n_ref-1)*(n_ref^2))) * area)
+    ojadepth[w] <- 1 / (1 + (1/(n_ref*(n_ref-1)*(n_ref - 2)/6)) * area)
   }
 
   return(ojadepth)
