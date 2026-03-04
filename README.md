@@ -14,7 +14,7 @@ If you're working with complex datasets, such as matrices or images, the followi
 
 MLD_cpp, MHD_cpp, MSD_cpp, MOD2_cpp, MOD3_cpp, coded in Rcpp. You can use them in one of two ways:
 
-1) Install the R package *MetricDepthCpp* directly from GitHub, where these functions are defined (recommended):
+1) Install the R package *MetricDepthCpp* directly from GitHub, where all the functions above are defined (recommended):
 
 ```r
 remotes::install_github('vidazamani/Depth-functions-for-Object-Data/MetricDepthCpp')
