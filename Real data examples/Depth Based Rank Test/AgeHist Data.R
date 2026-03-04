@@ -7,7 +7,7 @@ library(patchwork)
 library(ggpubr)
 library(dplyr)
 library(ggplot2)
-
+library(parallel)
 
 
 remotes::install_github('vidazamani/Depth-functions-for-Object-Data/RelativeDepth')
@@ -264,7 +264,7 @@ print(results_K)
 
 
 
-
+######## H-type and p-value Source: Asymptotic chi-square #########################
 
 
 H_statistic_relative <- function(depth_relative_fun,
@@ -407,6 +407,160 @@ print(p)
 
 
 
+######## H-type and p-value Source: Permutation-based #########################
+# PRECOMPUTE FULL WASSERSTEIN MATRIX (RUN ONCE) #######
+
+# M <- attr(Age_Pyramids_2014, "M")
+# n_total <- nrow(M)
+# 
+# full_wass_matrix <- matrix(0, n_total, n_total)
+# 
+# for (i in 1:(n_total - 1)) {
+#   for (j in (i + 1):n_total) {
+#     
+#     d <- WassSqDistH(
+#       Age_Pyramids_2014[i]@M[[1]],
+#       Age_Pyramids_2014[j]@M[[1]]
+#     )
+#     
+#     full_wass_matrix[i, j] <- sqrt(d)
+#     full_wass_matrix[j, i] <- sqrt(d)
+#   }
+# }
+# 
+# diag(full_wass_matrix) <- 0
+# 
+# 
+# 
+# 
+# rownames(full_wass_matrix) <- countries
+# colnames(full_wass_matrix) <- countries
+# 
+# 
+# compute_H_value_fast <- function(depth_relative_fun,
+#                                  idx_group1,
+#                                  idx_group2) {
+#   
+#   idx_all <- c(idx_group1, idx_group2)
+#   
+#   # ---- Only subsetting (no recomputation) ----
+#   dist_mat_all <- full_wass_matrix[idx_all, idx_all, drop = FALSE]
+#   
+#   n1 <- length(idx_group1)
+#   n2 <- length(idx_group2)
+#   n  <- n1 + n2
+#   
+#   ref1 <- 1:n1
+#   ref2 <- (n1 + 1):(n1 + n2)
+#   
+#   compute_Hk <- function(ref_positions) {
+#     
+#     depth_vals <- depth_relative_fun(dist_mat_all, ref_positions)
+#     ranks <- rank(depth_vals, ties.method = "average")
+#     
+#     R1_sum <- sum(ranks[1:n1])
+#     R2_sum <- sum(ranks[(n1+1):n])
+#     
+#     Hk <- (12 / (n * (n + 1))) *
+#       ((R1_sum^2)/n1 + (R2_sum^2)/n2) -
+#       3 * (n + 1)
+#     
+#     return(Hk)
+#   }
+#   
+#   H1 <- compute_Hk(ref1)
+#   H2 <- compute_Hk(ref2)
+#   
+#   (H1 + H2) / 2
+# }
+# 
+# 
+# H_permutation_test_fast <- function(depth_relative_fun,
+#                                     idx_group1,
+#                                     idx_group2,
+#                                     B) {
+#   
+#   # ---- STEP 1: Observed statistic ----
+#   H_obs <- compute_H_value_fast(depth_relative_fun,
+#                                 idx_group1,
+#                                 idx_group2)
+#   
+#   idx_all <- c(idx_group1, idx_group2)
+#   n1 <- length(idx_group1)
+#   n2 <- length(idx_group2)
+#   
+#   H_perm <- numeric(B)
+#   
+#   for (b in 1:B) {
+#     
+#     # =====================================================
+#     # STEP 2 (Paper):
+#     # Permute pooled sample Y = X1 ∪ X2
+#     # =====================================================
+#     permuted <- sample(idx_all)
+#     
+#     # =====================================================
+#     # STEP 3 (Paper):
+#     # First n1 → group 1
+#     # Next n2  → group 2
+#     # =====================================================
+#     perm_g1 <- permuted[1:n1]
+#     perm_g2 <- permuted[(n1 + 1):(n1 + n2)]
+#     
+#     # =====================================================
+#     # STEP 4 (Paper):
+#     # Compute H* for this permutation
+#     # =====================================================
+#     H_perm[b] <- compute_H_value_fast(depth_relative_fun,
+#                                       perm_g1,
+#                                       perm_g2)
+#   }
+#   
+#   # Empirical p-value
+#   p_value <- mean(H_perm >= H_obs)
+#   
+#   list(H_obs = H_obs,
+#        p_value = p_value,
+#        H_perm = H_perm)
+# }
+# 
+# 
+# cores <- max(1, detectCores() - 1)
+# 
+# B <- 500
+# 
+# results_perm_H <- mclapply(
+#   1:length(depth_relative_models),
+#   function(i) {
+#     
+#     set.seed(1234 + i)
+#     
+#     out <- H_permutation_test_fast(
+#       depth_relative_fun = depth_relative_models[[i]],
+#       idx_group1 = idx_african,
+#       idx_group2 = idx_europe,
+#       B = B
+#     )
+#     
+#     data.frame(
+#       Model = depth_names[i],
+#       H_stat = out$H_obs,
+#       PValue_perm = out$p_value
+#     )
+#     
+#   },
+#   mc.cores = cores
+# )
+# 
+# results_perm_H <- do.call(rbind, results_perm_H)
+# 
+# print(results_perm_H)
+# 
+
+
+
+
+
 
 ################### Swaps #####################
 
@@ -512,9 +666,6 @@ contamination_rank_tests <- function(n_reverse,
   return(list(K_mean = mean(pvals_K),
               H_mean = mean(pvals_H)))
 }
-
-
-
 
 
 
@@ -633,3 +784,70 @@ p_all <- ggplot(df_all,
 
 
 print(p_all)
+
+
+## OR (three p-value)
+
+# contamination_rank_tests <- function(n_reverse,
+#                                      n_batches = 10,
+#                                      B_perm = 200,
+#                                      depth_fun,
+#                                      depth_relative_fun) {
+#   
+#   pvals_K <- c()
+#   pvals_H_asym <- c()
+#   pvals_H_perm <- c()
+#   
+#   for (batch in 1:n_batches) {
+#     
+#     set.seed(4000 + batch)
+#     
+#     idx_africa_rev <- idx_african
+#     idx_europe_rev <- idx_europe
+#     
+#     idx_swap <- sample(length(idx_europe_rev), n_reverse)
+#     
+#     # swap labels
+#     temp <- idx_europe_rev[idx_swap]
+#     idx_europe_rev[idx_swap] <- idx_africa_rev[idx_swap]
+#     idx_africa_rev[idx_swap] <- temp
+#     
+#     # K-type
+#     pvals_K[batch] <- compute_K_with_groups(depth_fun,
+#                                             idx_africa_rev,
+#                                             idx_europe_rev)
+#     
+#     # H asymptotic
+#     pvals_H_asym[batch] <- compute_H_with_groups(depth_relative_fun,
+#                                                  idx_africa_rev,
+#                                                  idx_europe_rev)
+#     
+#     # H permutation
+#     pvals_H_perm[batch] <- H_permutation_test_fast(depth_relative_fun,
+#                                                  idx_africa_rev,
+#                                                  idx_europe_rev,
+#                                                  B = B_perm)
+#   }
+#   
+#   return(list(K_mean = mean(pvals_K),
+#               H_asym_mean = mean(pvals_H_asym),
+#               H_perm_mean = mean(pvals_H_perm)))
+# }
+# 
+# 
+# results_12 <- data.frame()
+# 
+# for (i in 1:length(depth_models)) {
+#   
+#   res <- contamination_rank_tests(
+#     n_reverse = 12,
+#     depth_fun = depth_models[[i]],
+#     depth_relative_fun = depth_relative_models[[i]]
+#   )
+#   
+#   results_12 <- rbind(results_12,
+#                       data.frame(Model = depth_names[i],
+#                                  K_PValue = res$K_mean,
+#                                  H_asym_PValue = res$H_asym_mean,
+#                                  H_perm_PValue = res$H_perm_mean))
+# }
