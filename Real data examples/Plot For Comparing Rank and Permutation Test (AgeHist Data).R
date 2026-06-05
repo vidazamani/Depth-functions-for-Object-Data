@@ -69,7 +69,7 @@ p_all_tests <- ggplot(df_all_tests,
   
   labs(
     x = "",
-    y = expression(-log[10](italic(p_value))),
+    y = expression(-log[10](italic(p-value))),
     fill = ""
   ) +
   
@@ -104,7 +104,7 @@ p_all_tests_noK <- ggplot(df_all_tests_noK,
   
   labs(
     x = "",
-    y = expression(-log[10](italic(p_value))),
+    y = expression(-log[10](italic(p-value))),
     fill = ""
   ) +
   
@@ -141,7 +141,7 @@ p_all_tests_o <- ggplot(df_all_tests,
   
   labs(
     x = "",
-    y = expression(italic(p_value)),
+    y = expression(italic(p-value)),
     fill = ""
   ) +
   
