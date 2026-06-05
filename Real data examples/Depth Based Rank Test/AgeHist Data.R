@@ -770,7 +770,7 @@ p_all <- ggplot(df_all,
   
   labs(
     x = "",
-    y = expression(-log[10](italic(p_value))),
+    y = expression(-log[10](italic(p-value))),
     fill = ""
   ) +
   
