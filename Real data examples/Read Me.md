@@ -2,6 +2,9 @@
 
 
 
-## The reason why this project is useful for you
+## First step
+you need to run the file of Age Hist in both Permuation and Rank test folders
 
-### The main metric depth functions are:
+## Second Step
+you need to run the plot file
+
