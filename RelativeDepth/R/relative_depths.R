@@ -58,8 +58,8 @@ MHD_relative <- function(D, ref_idx) {
   p_mat <- matrix(0, n_ref, n_ref)
 
   # Build halfspaces using reference group only
-  for (a in 1:(n_ref-1)) {
-    for (b in (a+1):n_ref) {
+  for (a in 1:(n_ref)) {
+    for (b in 1:n_ref) {
 
       i <- ref_idx[a]
       j <- ref_idx[b]
@@ -82,8 +82,8 @@ MHD_relative <- function(D, ref_idx) {
 
     Q <- c()
 
-    for (a in 1:(n_ref-1)) {
-      for (b in (a+1):n_ref) {
+    for (a in 1:(n_ref)) {
+      for (b in 1:n_ref) {
 
         i <- ref_idx[a]
         j <- ref_idx[b]
