@@ -42,11 +42,11 @@ MHD <- function(D){
   p = matrix(0,n,n)
   tu = c()
   
-  for (i in 1:(n-1)) {
-    for (j in (i+1):n) {
+  for (i in 1:n) {
+    for (j in 1:n) {
       s = 0
       for (k in 1:n) {
-        if (D[k,i]<= D[k,j]+1e-6){
+        if (D[k,i]<= D[k,j] + 1e-6){
           s=s+1
         }
       }
@@ -58,10 +58,10 @@ MHD <- function(D){
   
   for (y in 1:n) {
     Q = NULL
-    for (i in 1:(n-1)) {
-      for (j in (i+1):n) {
+    for (i in 1:n) {
+      for (j in 1:n) {
         
-        if (D[y,i]<=D[y,j]){
+        if (D[y,i]<=D[y,j] + 1e-6){
           Q = c(Q,p[i,j])
         }
       }
