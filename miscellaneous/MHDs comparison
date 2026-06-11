@@ -1,0 +1,134 @@
+library(ICtest)
+library(shapes)
+library(factoextra)
+library(CovTools)
+library(GA)
+library(abind)
+library(ggplot2)
+library(dplyr)
+library(purrr)
+library(parallel)
+library(dplyr)
+library(viridis)
+library(ggsci)
+library(ggpubr)
+library(MHD)
+library(manifold)
+library(dfoptim)
+library(GenSA)
+library(Rcpp) ## you need to have the latest version of Rcpp
+library(MetricDepth)
+
+
+
+# generate data function 
+
+gener_corr_data <- function(p,n,eps,mu){
+  
+  # Non-outlying sample size
+  n0 <- floor((1 - eps)*n)
+  
+  # Outlying sample size
+  n1 <- n - n0
+  
+  many_S_non_outliers <- replicate(n0, {
+    
+    U <- rorth(p)
+    D <- diag(exp(rnorm(p)))
+    S <- U%*%D%*%t(U)
+    
+    diagS <- diag(S)
+    diag(1/sqrt(diagS))%*%S%*%diag(1/sqrt(diagS))
+    
+  })
+  
+  many_S_outliers <- replicate(n1, {
+    
+    U <- rorth(p)
+    D <- diag(exp(c(rnorm(1, mu), rnorm(p - 1, -mu))))
+    S <- U%*%D%*%t(U)
+    
+    diagS <- diag(S)
+    diag(1/sqrt(diagS))%*%S%*%diag(1/sqrt(diagS))
+    
+    
+  })
+  
+  many_S <- abind(many_S_non_outliers, many_S_outliers)
+  return(many_S)
+}
+
+
+p = 3; n = 100; eps = 0.3; mu = 1
+# generate data
+many_S <- gener_corr_data(p,n,eps,mu)
+
+# Compute the distance matrix between the corr matrices
+
+
+D <- CovDist(many_S, method = "AIRM")
+
+
+
+
+MHD_cpp(D)
+
+
+############# Dai and Lopez-Pintado (2022) ######################
+
+# generate data
+x_vec <- t(apply(many_S, 3, c))
+
+
+mfd <- manifold::createM('AffInv')
+
+# The default
+depthObj1 <- MHD(mfd, x_vec)
+depthObj1$depthSamp
+
+###
+# Tukey's depth for object data (Metric Halfspace depth)
+MHD <- function(D){
+  
+  n <- nrow(D)
+  p = matrix(0,n,n)
+  tu = c()
+  
+  for (i in 1:n) {
+    for (j in 1:n) {
+      s = 0
+      for (k in 1:n) {
+        if (D[k,i]<= D[k,j] + 1e-6){
+          s=s+1
+        }
+      }
+      
+      p[i,j] = (1/n)*s
+      
+    }
+  }
+  
+  for (y in 1:n) {
+    Q = NULL
+    for (i in 1:n) {
+      for (j in 1:n) {
+        
+        if (D[y,i]<=D[y,j] + 1e-6){
+          Q = c(Q,p[i,j])
+        }
+      }
+    }
+    tu[y] = min(Q)
+  }
+  
+  
+  
+  return(tu)
+  
+}
+
+###
+
+all.equal(MHD_cpp(D), depthObj1$depthSamp)
+all.equal(MHD(D), depthObj1$depthSamp)
+
