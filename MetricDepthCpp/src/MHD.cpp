@@ -13,8 +13,8 @@ NumericVector MHD_cpp(NumericMatrix D) {
   NumericVector tu(n);
   
   // Compute matrix p
-  for (int i = 0; i < n - 1; ++i) {
-    for (int j = i + 1; j < n; ++j) {
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
       double s = 0.0;
       for (int k = 0; k < n; ++k) {
         if (D(k, i) <= D(k, j) + 1e-6) {
@@ -28,9 +28,9 @@ NumericVector MHD_cpp(NumericMatrix D) {
   // Compute tu vector
   for (int y = 0; y < n; ++y) {
     double Q = 1.0;
-    for (int i = 0; i < n - 1; ++i) {
-      for (int j = i + 1; j < n; ++j) {
-        if (D(y, i) <= D(y, j)) {
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+        if (D(y, i) <= D(y, j) + 1e-6) {
           Q = std::min(Q, p(i, j));
         }
       }
@@ -50,8 +50,8 @@ double MHD_test_cpp(NumericMatrix D, NumericVector d) {
   NumericMatrix p(n, n);
   double Q = 1.0;
   
-  for (int i = 0; i < n - 1; ++i) {
-    for (int j = i + 1; j < n; ++j) {
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
       double s = 0.0;
       for (int k = 0; k < n; ++k) {
         if (D(k,i) <= D(k,j) + 1e-6) {
@@ -62,8 +62,8 @@ double MHD_test_cpp(NumericMatrix D, NumericVector d) {
     }
   }
   
-  for (int i = 0; i < n - 1; ++i) {
-    for (int j = i + 1; j < n; ++j) {
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
       if (d[i] <= d[j]) {
         if (p(i,j) <= Q) {
           Q = p(i,j);
