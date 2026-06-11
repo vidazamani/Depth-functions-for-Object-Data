@@ -64,7 +64,7 @@ double MHD_test_cpp(NumericMatrix D, NumericVector d) {
   
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      if (d[i] <= d[j]) {
+      if (d[i] <= d[j] + 1e-6) {
         if (p(i,j) <= Q) {
           Q = p(i,j);
         }
