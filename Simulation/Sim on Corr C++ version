@@ -459,18 +459,3 @@ ggplot()+
 
 
 dev.off()
-
-
-#####
-
-# plot3 = ggplot(corr_sim_data,aes(x = sample_size, y = avg_error, col = method,linetype = factor(outlier_rate)))+ 
-#   facet_grid(matrix_dimension~.)+
-#   geom_line(linewidth = 0.7)+
-#   scale_x_continuous(name="sample size")+
-#   theme_bw()+ 
-#   labs(title = "Performance of each Metric Depth Function", 
-#        subtitle = "when matrix dimnesion is 3 and 5% of Distribution is contaminated",
-#        y = 'Bias in log scale')+ 
-#   theme(plot.title = element_text(size = 12), 
-#         plot.subtitle = element_text(size = 9))+
-#   scale_y_log10()
