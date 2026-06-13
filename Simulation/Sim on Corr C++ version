@@ -246,7 +246,7 @@ corr_sim_data <- dget("C:\\Users\\vizama\\Documents\\1st paper\\Sim on corr cpp 
 
 ### 2 * 3 panel
 
-###################### MOD3/MOD3 plot ########################
+###################### Relative plot ########################
 
 specific_method <- "Metric Oja depth 3D"
 specific_method <- "Metric Oja depth 2D"
