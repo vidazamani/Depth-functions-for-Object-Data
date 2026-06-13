@@ -225,7 +225,7 @@ sph_data <- dget("C:\\Users\\vizama\\Documents\\1st paper\\Sim on sphere cpp res
 
 
 
-#### MOD3/MOD3 plot
+#### Relative plot
 
 specific_method <- "Metric Oja depth 3D"
 specific_method <- "Metric Oja depth 2D"
@@ -241,7 +241,7 @@ df <- sph_data %>% group_by(method) %>%
 
 
 pdf(file = 
-      "C:\\Users\\vizama\\Documents\\1st paper\\Sim on sphere cpp results\\Error\\sph error cpp relative to MSD.pdf",  
+      "C:\\Users\\vizama\\Documents\\1st paper\\Sim on sphere cpp results\\Error\\sph error relative to MSD cpp.pdf",  
     width = 10, # The width of the plot in inches
     height = 6) # The height of the plot in inches
 
@@ -295,7 +295,7 @@ dev.off()
 ##### Without division
 
 pdf(file = 
-      "C:\\Users\\vizama\\Documents\\1st paper\\Sim on sphere cpp results\\Error\\sph error cpp nondiv.pdf",  
+      "C:\\Users\\vizama\\Documents\\1st paper\\Sim on sphere cpp results\\Error\\sph error withoutdiv cpp.pdf",  
     width = 10, # The width of the plot in inches
     height = 6) # The height of the plot in inches
 
