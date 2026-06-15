@@ -130,13 +130,13 @@ p_error <- ggplot(summary_df, aes(x=sample_size)) +
     linetype   = guide_legend(nrow=1, title=NULL,
                               override.aes=list(colour="black"))
   ) +
-  theme_bw(base_size=13) +
+  theme_bw(base_size=15) +
   theme(
     legend.position   = "bottom",
     legend.box        = "vertical",
     legend.spacing.y  = unit(0.1, "cm"),
     legend.key.width  = unit(1.5, "cm"),
-    legend.text       = element_text(size=9)
+    legend.text       = element_text(size=11)
   )
 
 
@@ -172,10 +172,9 @@ p_time <- ggplot(summary_df, aes(x=sample_size)) +
   scale_colour_manual(labels = label, values=series_cols) +
   scale_linetype_manual(name="Sample Type", values=sample_ltys) +
   labs(x="Sample Size", y="Estimation Time (log, in seconds)") +
-  theme_bw(base_size=13) 
+  theme_bw(base_size=15) 
 
 
-pdf("C:/Users/vizama/Documents/1st paper/MOD3 MHD comparison/MOD3 MHD compare.pdf", 10 ,5)
+pdf("C:/Users/vizama/Documents/1st paper/MOD3 MHD comparison/MOD3 MHD compare.pdf", 9 ,6)
 ggarrange(p_error, p_time, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
 dev.off()
-
