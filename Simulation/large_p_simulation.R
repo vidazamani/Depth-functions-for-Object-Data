@@ -1,5 +1,4 @@
-# Oja-paper large p simulation
-
+# Oja-paper distance computation simulation
 
 library(tidyverse)
 library(MetricDepth)
@@ -70,22 +69,17 @@ single_simu <- function(n, p){
 # single_simu(n, p)
 
 
-
+# Run a total of 10 batches with the following n-values
 # Batches 1-5: n = 100
-# Batches 7-11: n = 200
+# Batches 6-10: n = 200
+
 # Always 20 reps per batch
 
-# Batch 11 run with set.seed(30111988 + batch - 1 + 100) instead of the one below
-
-# I.e., total of 10 batches
-
-                  
-n <- 200
 p_set <- c(50, 100, 200, 400, 800, 1600)
-
 reps_per_set <- 20
 
-batch <- 1
+n <- 200
+batch <- 10
 
 set.seed(30111988 + batch - 1)
 res <- NULL
@@ -103,16 +97,15 @@ for(p in p_set){
 
   
   
-write.table(res, paste0("/Users/jomivi/Library/Mobile Documents/com~apple~CloudDocs/Work/Supervision/Vida/Paper_1_revision/results_p_experiment/res_", batch, ".txt"))
+write.table(res, paste0("/Users/jomivi/Library/Mobile Documents/com~apple~CloudDocs/Work/Supervision/Vida/Paper_1_revision/revision_results_p_experiment/res_", batch, ".txt"))
 
 
 # res
 
 res <- NULL
 
-for(i in c(1:5, 7:11)){
-  # temp <- read.table(paste0("C:\\Users\\joniv\\iCloudDrive\\Work\\Supervision\\Lauri\\Paper_2\\Revision\\Timing_results\\res_", i, ".txt"))
-  temp <- read.table(paste0("/Users/jomivi/Library/Mobile Documents/com~apple~CloudDocs/Work/Supervision/Vida/Paper_1_revision/results_p_experiment/res_", i, ".txt"))
+for(i in c(1:10)){
+  temp <- read.table(paste0("/Users/jomivi/Library/Mobile Documents/com~apple~CloudDocs/Work/Supervision/Vida/Paper_1_revision/revision_results_p_experiment/res_", i, ".txt"))
   res <- bind_rows(res, temp)
 }
 
@@ -145,7 +138,7 @@ res_agg <- bind_rows(res_agg, res_rand_1, res_rand_2) %>%
   mutate(n = factor(n))
 
 
-pdf(paste0("/Users/jomivi/Library/Mobile Documents/com~apple~CloudDocs/Work/Supervision/Vida/Paper_1_revision/plot_p_experiment.pdf"), width = 5, height = 4)
+pdf(paste0("/Users/jomivi/Library/Mobile Documents/com~apple~CloudDocs/Work/Supervision/Vida/Paper_1_revision/revision_plot_p_experiment.pdf"), width = 5, height = 4)
 
 ggplot(filter(res_agg, method != "RAND"), aes(x = p, y = avg_res)) +
   geom_line(aes(col = method, linetype = n)) +
