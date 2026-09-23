@@ -36,7 +36,7 @@ The following list shows which files can be used to replicate which simulation s
 
 
 
-### Great! Then How to Use this Project for my own data?
+### Great! Then how to use this project for my own data?
 
 After calling all necessary libraries, and installing MetricDepth_1.1, the next step is to import your dataset and compute the distance between objects in it. For example if you have functional data use metric.lp(YOUR FUNCTIONAL DATA) to achieve this. Finally based on our suggestions in the paper, choose which depth function meets your needs the best and use your computed distance matrix as an input in the chosen depth function, e.g., MOD3_cpp. Now you have found the depths and, among them, the Most central Object in your dataset!
 
